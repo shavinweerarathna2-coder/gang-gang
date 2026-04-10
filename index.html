@@ -2482,6 +2482,21 @@ syncHtmlBg('loading');
     </div>
   </div>
 
+  <!-- Notifications section -->
+  <div class="settings-section">
+    <div class="settings-section-label">🔔 Notifications</div>
+    <div class="settings-row" style="justify-content:space-between;cursor:pointer" onclick="enableNotifsFromSettings()">
+      <div class="settings-row-left">
+        <div class="settings-row-icon">🔔</div>
+        <div>
+          <div class="settings-row-title">Enable Notifications</div>
+          <div class="settings-row-sub" id="settNotifStatus">Get nudged to log, low mood alerts &amp; note alerts</div>
+        </div>
+      </div>
+      <span style="font-size:18px;color:var(--text-dim)" id="settNotifArrow">›</span>
+    </div>
+  </div>
+
   <div style="height:16px"></div>
 </div>
 
@@ -3454,7 +3469,60 @@ function showWhatsNew() {
   document.getElementById('whatsNewModal').classList.add('open');
 }
 
-async function enableNotifsFromModal() {
+async function enableNotifsFromSettings() {
+  const status = document.getElementById('settNotifStatus');
+  const arrow  = document.getElementById('settNotifArrow');
+  if(!db.url || !db.key) { showToast('Connect Supabase first ↑'); return; }
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    showToast('Open from home screen to enable notifications');
+    return;
+  }
+  if(status) status.textContent = 'Enabling…';
+  try {
+    const reg = await navigator.serviceWorker.register('./sw.js');
+    await navigator.serviceWorker.ready;
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted') {
+      if(status) status.textContent = 'Permission denied — enable in iPhone Settings';
+      return;
+    }
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const res = await fetch(`${db.url}/rest/v1/push_subscriptions`, {
+      method: 'POST',
+      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({
+        member_id: currentUser.id,
+        subscription: subscription.toJSON(),
+        updated_at: new Date().toISOString()
+      })
+    });
+    if(!res.ok) throw new Error('Save failed: ' + res.status);
+    if(status) status.textContent = '✓ Notifications enabled';
+    if(arrow)  arrow.textContent = '✓';
+    showToast('Notifications enabled 🔔');
+  } catch(e) {
+    if(status) status.textContent = 'Failed — tap to try again';
+    showToast('Error: ' + e.message);
+  }
+}
+
+function updateNotifStatus() {
+  const status = document.getElementById('settNotifStatus');
+  const arrow  = document.getElementById('settNotifArrow');
+  if(!status) return;
+  if(Notification.permission === 'granted') {
+    status.textContent = '✓ Notifications enabled';
+    if(arrow) arrow.textContent = '✓';
+  } else if(Notification.permission === 'denied') {
+    status.textContent = 'Blocked — enable in iPhone Settings → Gang Gang';
+    if(arrow) arrow.textContent = '!';
+  } else {
+    status.textContent = 'Get nudged to log, low mood alerts & note alerts';
+  }
+}
   const btn = document.getElementById('wnEnableNotifs');
   if(btn) { btn.textContent = '⏳ Enabling…'; btn.disabled = true; }
   try {
@@ -4981,6 +5049,7 @@ function openSettingsSheet() {
   document.querySelectorAll('.theme-swatch').forEach(s => s.classList.toggle('active', s.dataset.theme===currentTheme));
   const dbSt = document.getElementById('settDbStatus');
   if(dbSt) dbSt.textContent = (db.url && db.key) ? '✓ Connected to Supabase' : 'Tap to connect Supabase';
+  updateNotifStatus();
   openSheet('settingsSheet');
 }
 
