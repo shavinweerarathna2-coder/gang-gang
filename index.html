@@ -3380,7 +3380,7 @@ function urlBase64ToUint8Array(base64String) {
 async function registerPush(memberId) {
   if(!db.url || !db.key) return; // needs Supabase
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
+  if(VAPID_PUBLIC_KEY === 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E') return;
   try {
     const reg = await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
