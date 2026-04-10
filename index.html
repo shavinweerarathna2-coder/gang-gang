@@ -3523,6 +3523,8 @@ function updateNotifStatus() {
     status.textContent = 'Get nudged to log, low mood alerts & note alerts';
   }
 }
+
+async function enableNotifsFromModal() {
   const btn = document.getElementById('wnEnableNotifs');
   if(btn) { btn.textContent = '⏳ Enabling…'; btn.disabled = true; }
   try {
