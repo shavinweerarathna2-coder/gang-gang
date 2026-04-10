@@ -1696,6 +1696,33 @@ body.compact-mode .gang-rank-list { gap:0; }
   animation:lsFade .8s .8s ease both;
 }
 
+
+/* ════════════════
+   POKE BUTTON
+════════════════ */
+.poke-wrap {
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:16px; padding:12px 14px; margin-bottom:12px;
+  gap:10px;
+}
+.poke-info { flex:1; min-width:0; }
+.poke-title {
+  font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:700;
+  color:var(--text); line-height:1.2;
+}
+.poke-sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
+.poke-btn {
+  flex-shrink:0; border:none; border-radius:100px; cursor:pointer;
+  font-family:'Baloo 2',sans-serif; font-size:13px; font-weight:800;
+  padding:8px 16px; color:#fff; letter-spacing:.02em;
+  background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
+  box-shadow:0 3px 12px rgba(0,0,0,.2);
+  transition:all .18s; -webkit-tap-highlight-color:transparent;
+}
+.poke-btn:active { transform:scale(.96); }
+.poke-btn:disabled { opacity:.5; cursor:default; transform:none; }
+
 /* ════════════════
    DASH QUOTE HERO
 ════════════════ */
@@ -2656,6 +2683,9 @@ syncHtmlBg('loading');
       <!-- ② Love letters -->
       <div id="loveletterSlot"></div>
 
+      <!-- ② Poke slot -->
+      <div id="pokeSlot"></div>
+
 
 
       <!-- ③ The Gang Today — combined ranked list -->
@@ -3530,7 +3560,7 @@ async function enableNotifsFromModal() {
     // Step 1: check SW
     if(!('serviceWorker' in navigator)) throw new Error('No service worker support');
     if(!('PushManager' in window)) throw new Error('No PushManager — open from home screen, not Safari');
-    if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') throw new Error('VAPID key not set');
+    if(VAPID_PUBLIC_KEY === 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E') throw new Error('VAPID key not set');
     if(!db.url || !db.key) throw new Error('Supabase not connected');
 
     // Step 2: register SW
@@ -3648,6 +3678,7 @@ function refreshAll() {
   updateMoreSheetMood();
   renderSupportNudge();
   renderLoveLetterCard();
+  renderPokeCard();
   renderGroupStreak();
   const active=document.querySelector('.tab-pane.active');
   if(active&&active.id.startsWith('tab-member-')){
@@ -4900,6 +4931,75 @@ function gsCountdown() {
   const h = Math.floor(secsLeft / 3600);
   const m = Math.floor((secsLeft % 3600) / 60);
   return `${h}h ${m}m`;
+}
+
+
+// ══════════════════════════════════════════════
+//  POKE — nudge unlogged members
+// ══════════════════════════════════════════════
+function renderPokeCard() {
+  const slot = document.getElementById('pokeSlot');
+  if(!slot || !currentUser) return;
+
+  const unlogged = MEMBERS.filter(m => m.id !== currentUser.id && !db.todayEntry(m.id));
+  if(!unlogged.length) { slot.innerHTML = ''; return; }
+
+  const names = unlogged.map(m => m.avatar).join(' ');
+  const count = unlogged.length;
+
+  slot.innerHTML = `<div class="poke-wrap">
+    <div class="poke-info">
+      <div class="poke-title">${names} ${count===1?'hasn’t':'haven’t'} logged today</div>
+      <div class="poke-sub">Give them a little nudge 👋</div>
+    </div>
+    <button class="poke-btn" id="pokeBtn" onclick="sendPoke()">Poke</button>
+  </div>`;
+}
+
+async function sendPoke() {
+  if(!db.url || !db.key) { showToast('Supabase not connected'); return; }
+  const btn = document.getElementById('pokeBtn');
+  if(btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+  const unlogged = MEMBERS.filter(m => m.id !== currentUser.id && !db.todayEntry(m.id));
+  if(!unlogged.length) { showToast('Everyone has logged today! 🎉'); return; }
+
+  const unloggedIds = unlogged.map(m => m.id);
+
+  try {
+    const res = await fetch(`${db.url}/functions/v1/notify-poke`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + db.key
+      },
+      body: JSON.stringify({
+        from_name: currentUser.name,
+        from_avatar: currentUser.avatar,
+        target_ids: unloggedIds
+      })
+    });
+
+    if(!res.ok) throw new Error('Function error: ' + res.status);
+
+    if(btn) { btn.textContent = 'Poked! 👋'; }
+    showToast('Nudge sent to ' + unlogged.map(m=>m.name).join(', ') + ' 👋');
+
+    // Prevent spamming — disable for 5 mins
+    const cooldownKey = `gang_poke_${todayKey()}`;
+    localStorage.setItem(cooldownKey, Date.now().toString());
+    setTimeout(() => renderPokeCard(), 300000);
+
+  } catch(e) {
+    if(btn) { btn.disabled = false; btn.textContent = 'Poke'; }
+    showToast('Failed: ' + e.message);
+  }
+}
+
+function pokeOnCooldown() {
+  const key = `gang_poke_${todayKey()}`;
+  const last = parseInt(localStorage.getItem(key) || '0');
+  return last && (Date.now() - last) < 300000; // 5 min cooldown
 }
 
 function renderGroupStreak() {
