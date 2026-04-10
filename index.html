@@ -2823,9 +2823,17 @@ syncHtmlBg('loading');
           <div class="wn-feat-desc">Switched to a proper cloud database. Moods, vibe tags and anonymous notes all sync reliably across every device.</div>
         </div>
       </div>
+      <div class="wn-feature">
+        <div class="wn-feat-icon">🔔</div>
+        <div class="wn-feat-text">
+          <div class="wn-feat-title">Notifications</div>
+          <div class="wn-feat-desc">Get nudged to log your mood, hear when someone's having a tough day, and know when an anonymous note lands in your inbox.</div>
+        </div>
+      </div>
     </div>
-    <div class="wn-close-wrap">
-      <button class="wn-close-btn" onclick="closeWhatsNew()">Got it 🔥</button>
+    <div class="wn-close-wrap" style="display:flex;flex-direction:column;gap:10px">
+      <button class="wn-close-btn" id="wnEnableNotifs" onclick="enableNotifsFromModal()" style="background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));margin-bottom:0">🔔 Enable Notifications</button>
+      <button class="wn-close-btn" onclick="closeWhatsNew()" style="background:var(--bg3);color:var(--text-muted);font-size:13px">Maybe later</button>
     </div>
   </div>
 </div>
@@ -3435,9 +3443,8 @@ function login(memberId) {
   switchTab('dashboard',document.querySelector('.nav-item[data-tab="dashboard"]'));
   setMobNav('dashboard');
   refreshAll();
-  registerPush(memberId); // request push permission + save token
   // Show what's new if this version hasn't been seen by this user
-  const wnKey = `gang_wn_3.0_${currentUser.id}`;
+  const wnKey = `gang_wn_3.1_${currentUser.id}`;
   if(!localStorage.getItem(wnKey)) {
     setTimeout(() => showWhatsNew(), 600);
   }
@@ -3447,11 +3454,18 @@ function showWhatsNew() {
   document.getElementById('whatsNewModal').classList.add('open');
 }
 
+async function enableNotifsFromModal() {
+  const btn = document.getElementById('wnEnableNotifs');
+  if(btn) { btn.textContent = '⏳ Enabling…'; btn.disabled = true; }
+  await registerPush(currentUser.id);
+  closeWhatsNew();
+}
+
 function closeWhatsNew() {
   const modal = document.getElementById('whatsNewModal');
   modal.classList.remove('open');
   // Mark as seen for this user and version
-  const wnKey = `gang_wn_3.0_${currentUser?.id}`;
+  const wnKey = `gang_wn_3.1_${currentUser?.id}`;
   if(wnKey) localStorage.setItem(wnKey, '1');
 }
 
