@@ -3376,7 +3376,7 @@ function buildMemberGrid() {
 // ══════════════════════════════════════════════
 
 // Replace this with your VAPID public key after running: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E';
+const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3388,7 +3388,7 @@ function urlBase64ToUint8Array(base64String) {
 async function registerPush(memberId) {
   if(!db.url || !db.key) return; // needs Supabase
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if(VAPID_PUBLIC_KEY === 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E') return;
+  if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
   try {
     const reg = await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
@@ -3457,8 +3457,47 @@ function showWhatsNew() {
 async function enableNotifsFromModal() {
   const btn = document.getElementById('wnEnableNotifs');
   if(btn) { btn.textContent = '⏳ Enabling…'; btn.disabled = true; }
-  await registerPush(currentUser.id);
-  closeWhatsNew();
+  try {
+    // Step 1: check SW
+    if(!('serviceWorker' in navigator)) throw new Error('No service worker support');
+    if(!('PushManager' in window)) throw new Error('No PushManager — open from home screen, not Safari');
+    if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') throw new Error('VAPID key not set');
+    if(!db.url || !db.key) throw new Error('Supabase not connected');
+
+    // Step 2: register SW
+    const reg = await navigator.serviceWorker.register('./sw.js');
+    await navigator.serviceWorker.ready;
+
+    // Step 3: request permission
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted') throw new Error('Permission denied by user');
+
+    // Step 4: subscribe
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+
+    // Step 5: save to Supabase
+    const res = await fetch(`${db.url}/rest/v1/push_subscriptions`, {
+      method: 'POST',
+      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({
+        member_id: currentUser.id,
+        subscription: subscription.toJSON(),
+        updated_at: new Date().toISOString()
+      })
+    });
+    if(!res.ok) throw new Error('Supabase save failed: ' + res.status);
+
+    if(btn) btn.textContent = '✓ Notifications enabled!';
+    setTimeout(() => closeWhatsNew(), 1200);
+
+  } catch(e) {
+    if(btn) { btn.textContent = '🔔 Enable Notifications'; btn.disabled = false; }
+    showToast('Push error: ' + e.message);
+    console.error('Push setup failed:', e);
+  }
 }
 
 function closeWhatsNew() {
