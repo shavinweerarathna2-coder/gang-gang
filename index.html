@@ -3390,7 +3390,7 @@ function buildMemberGrid() {
 // ══════════════════════════════════════════════
 
 // Replace this with your VAPID public key after running: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
+const VAPID_PUBLIC_KEY = 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3402,7 +3402,7 @@ function urlBase64ToUint8Array(base64String) {
 async function registerPush(memberId) {
   if(!db.url || !db.key) return; // needs Supabase
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
+  if(VAPID_PUBLIC_KEY === 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E') return;
   try {
     const reg = await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
