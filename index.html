@@ -1832,6 +1832,9 @@ body.compact-mode .gang-rank-list { gap:0; }
   /* ─ Base ─ */
   html,body { height:auto; overflow:auto; overscroll-behavior:none; }
   body { overflow-x:hidden; }
+  /* Make appShell fill screen and scroll on Android */
+  #appShell { display:none; flex-direction:column; height:100dvh; overflow:hidden; }
+  #appShell.active { display:flex; }
   #appShell { display:none; position:relative; flex-direction:column; min-height:100dvh; }
   #appShell.active { display:flex; }
 
@@ -1883,10 +1886,12 @@ body.compact-mode .gang-rank-list { gap:0; }
   .mob-nav-label { font-size:9px; }
 
   /* ─ Content & panes ─ */
-  .content-area { height:auto; overflow:visible; flex:none; display:flex; flex-direction:column; }
+  .content-area { height:auto; overflow:visible; flex:1; display:flex; flex-direction:column; min-height:0; }
   .tab-pane {
-    display:none; overflow:visible; flex:none;
+    display:none; overflow-y:auto; overflow-x:hidden; flex:1;
     padding:10px 12px calc(var(--mobile-nav-h) + var(--safe-bottom) + 14px);
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
   }
   .tab-pane.active { display:block; }
 
@@ -3420,7 +3425,7 @@ function buildMemberGrid() {
 // ══════════════════════════════════════════════
 
 // Replace this with your VAPID public key after running: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU';
+const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3432,7 +3437,7 @@ function urlBase64ToUint8Array(base64String) {
 async function registerPush(memberId) {
   if(!db.url || !db.key) return; // needs Supabase
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if(VAPID_PUBLIC_KEY === 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU') return;
+  if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
   try {
     const reg = await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
@@ -3560,7 +3565,7 @@ async function enableNotifsFromModal() {
     // Step 1: check SW
     if(!('serviceWorker' in navigator)) throw new Error('No service worker support');
     if(!('PushManager' in window)) throw new Error('No PushManager — open from home screen, not Safari');
-    if(VAPID_PUBLIC_KEY === 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU') throw new Error('VAPID key not set');
+    if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') throw new Error('VAPID key not set');
     if(!db.url || !db.key) throw new Error('Supabase not connected');
 
     // Step 2: register SW
@@ -4985,10 +4990,10 @@ async function sendPoke() {
     if(btn) { btn.textContent = 'Poked! 👋'; }
     showToast('Nudge sent to ' + unlogged.map(m=>m.name).join(', ') + ' 👋');
 
-    // Prevent spamming — disable for 5 mins
+    // Prevent spamming — disable for 1 min
     const cooldownKey = `gang_poke_${todayKey()}`;
     localStorage.setItem(cooldownKey, Date.now().toString());
-    setTimeout(() => renderPokeCard(), 300000);
+    setTimeout(() => renderPokeCard(), 60000);
 
   } catch(e) {
     if(btn) { btn.disabled = false; btn.textContent = 'Poke'; }
@@ -4999,7 +5004,7 @@ async function sendPoke() {
 function pokeOnCooldown() {
   const key = `gang_poke_${todayKey()}`;
   const last = parseInt(localStorage.getItem(key) || '0');
-  return last && (Date.now() - last) < 300000; // 5 min cooldown
+  return last && (Date.now() - last) < 60000; // 1 min cooldown
 }
 
 function renderGroupStreak() {
