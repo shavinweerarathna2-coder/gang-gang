@@ -2923,7 +2923,7 @@ const VIBES = [
   { key:'loveit',    emoji:'🥰', label:'Loving it' },
 ];
 
-const todayKey = () => new Date().toISOString().slice(0,10);
+const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const fmtDate  = iso => new Date(iso+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
 
 // ══════════════════════════════════════════════
@@ -3420,7 +3420,7 @@ function buildMemberGrid() {
 // ══════════════════════════════════════════════
 
 // Replace this with your VAPID public key after running: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E';
+const VAPID_PUBLIC_KEY = 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3432,7 +3432,7 @@ function urlBase64ToUint8Array(base64String) {
 async function registerPush(memberId) {
   if(!db.url || !db.key) return; // needs Supabase
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if(VAPID_PUBLIC_KEY === 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E') return;
+  if(VAPID_PUBLIC_KEY === 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU') return;
   try {
     const reg = await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
@@ -3442,9 +3442,9 @@ async function registerPush(memberId) {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
     // Save subscription to Supabase
-    await fetch(`${db.url}/rest/v1/push_subscriptions`, {
+    await fetch(`${db.url}/rest/v1/push_subscriptions?on_conflict=member_id`, {
       method: 'POST',
-      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates' },
+      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         member_id: memberId,
         subscription: subscription.toJSON(),
@@ -3519,9 +3519,9 @@ async function enableNotifsFromSettings() {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
-    const res = await fetch(`${db.url}/rest/v1/push_subscriptions`, {
+    const res = await fetch(`${db.url}/rest/v1/push_subscriptions?on_conflict=member_id`, {
       method: 'POST',
-      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates' },
+      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         member_id: currentUser.id,
         subscription: subscription.toJSON(),
@@ -3560,7 +3560,7 @@ async function enableNotifsFromModal() {
     // Step 1: check SW
     if(!('serviceWorker' in navigator)) throw new Error('No service worker support');
     if(!('PushManager' in window)) throw new Error('No PushManager — open from home screen, not Safari');
-    if(VAPID_PUBLIC_KEY === 'BClOgR9UOzFN7Rv7IX0GT2sZIpg7LxsO13gtMUgqiOhwGvG14VrtHDHeX9XH9xnroBnTV2jWFBjloOPq6NFUt3E') throw new Error('VAPID key not set');
+    if(VAPID_PUBLIC_KEY === 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU') throw new Error('VAPID key not set');
     if(!db.url || !db.key) throw new Error('Supabase not connected');
 
     // Step 2: register SW
@@ -3578,9 +3578,9 @@ async function enableNotifsFromModal() {
     });
 
     // Step 5: save to Supabase
-    const res = await fetch(`${db.url}/rest/v1/push_subscriptions`, {
+    const res = await fetch(`${db.url}/rest/v1/push_subscriptions?on_conflict=member_id`, {
       method: 'POST',
-      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates' },
+      headers: { ...db._headers(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         member_id: currentUser.id,
         subscription: subscription.toJSON(),
