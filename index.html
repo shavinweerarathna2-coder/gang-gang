@@ -4967,7 +4967,7 @@ async function sendPoke() {
   const unloggedIds = unlogged.map(m => m.id);
 
   try {
-    const res = await fetch(`${db.url}/functions/v1/notify-poke`, {
+    const res = await fetch(`${db.url}/functions/v1/hyper-task`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
