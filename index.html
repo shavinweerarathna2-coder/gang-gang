@@ -1707,14 +1707,16 @@ body.compact-mode .gang-rank-list { gap:0; }
   display:flex; align-items:flex-end; justify-content:center;
   background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
   opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+  pointer-events:none;
 }
+#forfeitModal.open { pointer-events:all; }
 #forfeitModal.open { opacity:1; visibility:visible; }
-
 .forfeit-sheet {
   background:var(--bg2); border-radius:28px 28px 0 0;
   padding:24px 24px 48px; width:100%; max-width:480px;
   display:flex; flex-direction:column; align-items:center; gap:16px;
   transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+  pointer-events:all;
 }
 #forfeitModal.open .forfeit-sheet { transform:translateY(0); }
 
@@ -1747,7 +1749,7 @@ body.compact-mode .gang-rank-list { gap:0; }
 }
 
 /* Spin button */
-.forfeit-spin-btn {
+.forfeit-spin-btn { margin-top:16px; 
   width:100%; max-width:280px; padding:16px;
   border:none; border-radius:16px; cursor:pointer;
   font-family:'Baloo 2',sans-serif; font-size:17px; font-weight:800;
@@ -1779,8 +1781,8 @@ body.compact-mode .gang-rank-list { gap:0; }
   width:100%; max-width:280px; padding:14px;
   border:none; border-radius:16px; cursor:pointer;
   font-family:'Baloo 2',sans-serif; font-size:16px; font-weight:800;
-  background:var(--bg3); color:var(--text);
-  border:1.5px solid var(--border);
+  background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
+  color:#fff; box-shadow:0 4px 20px rgba(0,0,0,.25);
   transition:all .18s; -webkit-tap-highlight-color:transparent;
 }
 
@@ -2562,7 +2564,7 @@ syncHtmlBg('loading');
         <canvas id="forfeitCanvas" class="forfeit-wheel" width="260" height="260"></canvas>
       </div>
       <button class="forfeit-spin-btn" id="forfeitSpinBtn" onclick="spinForfeitWheel()">
-        🎰 Spin the wheel
+        Spin the wheel
       </button>
     </div>
 
@@ -2572,7 +2574,7 @@ syncHtmlBg('loading');
       <div class="forfeit-number-big" id="forfeitNumber"></div>
       <div class="forfeit-text" id="forfeitText"></div>
       <button class="forfeit-done-btn" onclick="closeForfeitModal()">
-        😤 I accept my fate
+        I accept my fate 😤
       </button>
     </div>
   </div>
@@ -3645,7 +3647,7 @@ function urlBase64ToUint8Array(base64String) {
 async function registerPush(memberId) {
   if(!db.url || !db.key) return; // needs Supabase
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if(VAPID_PUBLIC_KEY === 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU') return;
+  if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
   try {
     const reg = await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
@@ -3774,7 +3776,7 @@ async function enableNotifsFromModal() {
     // Step 1: check SW
     if(!('serviceWorker' in navigator)) throw new Error('No service worker support');
     if(!('PushManager' in window)) throw new Error('Push not supported — use Chrome on Android or add to home screen on iOS');
-    if(VAPID_PUBLIC_KEY === 'BH0-_Gy75JOjNd8NKNflM1yETXHQvqOrk2nteIPdjquSKTjzl-_hf3wzE71i5lgwrSbtmEuPp4lqLS5efjkOPiU') throw new Error('VAPID key not set');
+    if(VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') throw new Error('VAPID key not set');
     if(!db.url || !db.key) throw new Error('Supabase not connected');
 
     // Step 2: register SW
