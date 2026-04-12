@@ -1702,20 +1702,16 @@ body.compact-mode .gang-rank-list { gap:0; }
    ANGIE'S COOKED POKE
 ════════════════ */
 .cooked-wrap {
-  background:linear-gradient(135deg,#0f0f0f 0%,#1a1a1a 50%,#2a0a0a 100%);
+  background:var(--bg2); border:1.5px solid var(--border);
   border-radius:16px; padding:18px 20px 16px;
   margin-bottom:12px; position:relative; overflow:hidden;
-  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  box-shadow:0 2px 12px rgba(0,0,0,.12);
 }
-.cooked-wrap::before {
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
-  background-size:20px 20px;
-}
+
 .cooked-title {
   font-family:'Baloo 2',sans-serif; font-size:13px; font-weight:800;
   letter-spacing:.18em; text-transform:uppercase;
-  color:rgba(255,100,100,.9); margin-bottom:10px;
+  color:var(--text-dim); margin-bottom:10px;
   position:relative; z-index:1; text-align:center;
 }
 .cooked-members {
@@ -1724,37 +1720,37 @@ body.compact-mode .gang-rank-list { gap:0; }
 }
 .cooked-member-btn {
   display:flex; flex-direction:column; align-items:center; gap:3px;
-  background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1);
+  background:var(--bg3); border:1.5px solid var(--border);
   border-radius:12px; padding:8px 12px; cursor:pointer;
-  font-family:'Nunito',sans-serif; color:rgba(255,255,255,.7); font-size:10px;
+  font-family:'Nunito',sans-serif; color:var(--text-muted); font-size:10px;
   transition:all .18s; -webkit-tap-highlight-color:transparent;
 }
 .cooked-member-btn:active { transform:scale(.95); }
 .cooked-member-btn.selected {
-  background:rgba(255,60,60,.2); border-color:rgba(255,80,80,.6);
-  color:#fff;
+  background:var(--blue-dim); border-color:var(--blue-dark);
+  color:var(--text);
 }
 .cooked-member-btn .cm-avatar { font-size:22px; line-height:1; }
 .cooked-member-btn .cm-name   { font-size:9px; font-weight:700; letter-spacing:.04em; }
 
 .cooked-poke-types {
-  display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px;
+  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;
   position:relative; z-index:1; justify-content:center;
 }
 .cooked-type-btn {
-  background:rgba(255,255,255,.06); border:1.5px solid rgba(255,255,255,.1);
-  border-radius:100px; padding:6px 13px; cursor:pointer;
-  font-family:'Nunito',sans-serif; font-size:12px; font-weight:700;
-  color:rgba(255,255,255,.65); transition:all .18s;
+  background:var(--bg3); border:1.5px solid var(--border);
+  border-radius:100px; padding:5px 10px; cursor:pointer;
+  font-family:'Nunito',sans-serif; font-size:11px; font-weight:700;
+  color:var(--text-muted); transition:all .18s;
   -webkit-tap-highlight-color:transparent; white-space:nowrap;
 }
 .cooked-type-btn.selected {
-  background:rgba(255,60,60,.25); border-color:rgba(255,80,80,.7);
-  color:#fff;
+  background:var(--blue-dim); border-color:var(--blue-dark);
+  color:var(--text);
 }
 .cooked-divider {
   font-size:9px; letter-spacing:.18em; text-transform:uppercase;
-  color:rgba(255,255,255,.25); text-align:center; margin:4px 0 10px;
+  color:var(--text-dim); opacity:.6; text-align:center; margin:4px 0 10px;
   position:relative; z-index:1;
 }
 
@@ -1962,7 +1958,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   .content-area { height:auto; overflow:visible; flex:1; display:flex; flex-direction:column; min-height:0; }
   .tab-pane {
     display:none; overflow-y:auto; overflow-x:hidden; flex:1;
-    padding:10px 12px calc(var(--mobile-nav-h) + var(--safe-bottom) + 14px);
+    padding:10px 12px calc(var(--mobile-nav-h) + var(--safe-bottom) + 40px);
     -webkit-overflow-scrolling:touch;
     overscroll-behavior-y:contain;
   }
@@ -5074,7 +5070,7 @@ function pokeOnCooldown() {
 //  ANGIE'S SECRET COOKED POKE 😮‍💨
 // ══════════════════════════════════════════════
 let cookedSelected  = null;
-let cookedPokeType  = 0; // index into ANGIE_POKES
+let cookedPokeType  = null; // index into ANGIE_POKES — nothing pre-selected
 
 const ANGIE_POKES = [
   { label:'😮‍💨 You are cooked',   body:'You are cooked 😮‍💨' },
@@ -5088,32 +5084,32 @@ const ANGIE_POKES = [
 function renderCookedCard() {
   const slot = document.getElementById('cookedSlot');
   if(!slot) return;
-  if(!currentUser || currentUser.id !== 'angie') { slot.innerHTML=''; return; }
+  if(!currentUser) { slot.innerHTML=''; return; }
 
-  const others = MEMBERS.filter(m => m.id !== 'angie');
+  const others = MEMBERS.filter(m => m.id !== currentUser.id);
   const memberBtns = others.map(m => `
     <div class="cooked-member-btn${cookedSelected===m.id?' selected':''}"
          onclick="selectCooked('${m.id}')" id="cm-${m.id}">
       <span class="cm-avatar">${m.avatar}</span>
-      <span class="cm-name">${m.name.split(' ')[0]}</span>
+      <span class="cm-name">${m.name}</span>
     </div>`).join('');
 
   const typeBtns = ANGIE_POKES.map((p,i) => `
-    <button class="cooked-type-btn${cookedPokeType===i?' selected':''}"
+    <button class="cooked-type-btn${cookedPokeType!==null&&cookedPokeType===i?' selected':''}"
       onclick="selectCookedType(${i})">${p.label}</button>`).join('');
 
-  const canSend = cookedSelected !== null;
-  const selectedPoke = ANGIE_POKES[cookedPokeType];
+  const canSend = cookedSelected !== null && cookedPokeType !== null;
+  const selectedPoke = cookedPokeType !== null ? ANGIE_POKES[cookedPokeType] : null;
 
   slot.innerHTML = `<div class="cooked-wrap">
-    <div class="cooked-title">🦋 Angie's Pokes</div>
+    <div class="cooked-title">Poke someone for fun 🤫</div>
     <div class="cooked-divider">Select a member</div>
     <div class="cooked-members">${memberBtns}</div>
     <div class="cooked-divider">Choose your message</div>
     <div class="cooked-poke-types">${typeBtns}</div>
     <button class="cooked-send-btn" id="cookedSendBtn" onclick="sendCooked()"
       ${!canSend?'disabled':''}>
-      ${canSend ? selectedPoke.label + ' — Send it' : 'Select someone first'}
+      ${!cookedSelected ? 'Select someone first' : cookedPokeType===null ? 'Choose a message' : selectedPoke.label + ' — Send it'}
     </button>
   </div>`;
 }
@@ -5168,9 +5164,10 @@ function renderGroupStreak() {
   
   const memberDots = MEMBERS.map(m => {
     const logged = !!db.todayEntry(m.id);
+    const shortName = m.name === 'Sanji Banji' ? 'Sanji' : m.name;
     return `<div class="gs-member-dot${logged ? '' : ' missing'}">
       <span>${m.avatar}</span>
-      <span>${m.name.split(' ')[0]}</span>
+      <span>${shortName}</span>
     </div>`;
   }).join('');
   
