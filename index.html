@@ -1698,6 +1698,115 @@ body.compact-mode .gang-rank-list { gap:0; }
 
 
 
+
+/* ════════════════
+   FORFEIT WHEEL MODAL
+════════════════ */
+#forfeitModal {
+  position:fixed; inset:0; z-index:9500;
+  display:flex; align-items:flex-end; justify-content:center;
+  background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
+  opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+}
+#forfeitModal.open { opacity:1; visibility:visible; }
+
+.forfeit-sheet {
+  background:var(--bg2); border-radius:28px 28px 0 0;
+  padding:24px 24px 48px; width:100%; max-width:480px;
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+#forfeitModal.open .forfeit-sheet { transform:translateY(0); }
+
+.forfeit-handle {
+  width:40px; height:4px; background:var(--border2);
+  border-radius:100px; margin-bottom:4px;
+}
+.forfeit-title {
+  font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800;
+  color:var(--text); text-align:center; line-height:1.2;
+}
+.forfeit-sub {
+  font-size:13px; color:var(--text-dim); text-align:center; margin-top:-8px;
+}
+
+/* Wheel */
+.forfeit-wheel-wrap {
+  position:relative; width:260px; height:260px;
+}
+.forfeit-wheel {
+  width:260px; height:260px; border-radius:50%;
+  border:4px solid var(--border2);
+  box-shadow:0 8px 32px rgba(0,0,0,.3);
+  transition:transform 4s cubic-bezier(.17,.67,.12,.99);
+}
+.forfeit-pointer {
+  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+  font-size:28px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));
+  z-index:2;
+}
+
+/* Spin button */
+.forfeit-spin-btn {
+  width:100%; max-width:280px; padding:16px;
+  border:none; border-radius:16px; cursor:pointer;
+  font-family:'Baloo 2',sans-serif; font-size:17px; font-weight:800;
+  background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
+  color:#fff; box-shadow:0 4px 20px rgba(0,0,0,.25);
+  transition:all .2s; -webkit-tap-highlight-color:transparent;
+  letter-spacing:.02em;
+}
+.forfeit-spin-btn:active { transform:scale(.97); }
+.forfeit-spin-btn:disabled { opacity:.5; cursor:default; transform:none; }
+
+/* Forfeit reveal */
+.forfeit-reveal {
+  display:none; flex-direction:column; align-items:center; gap:14px;
+  text-align:center; padding:8px 0;
+}
+.forfeit-reveal.show { display:flex; }
+.forfeit-number-big {
+  font-family:'Baloo 2',sans-serif; font-size:72px; font-weight:800;
+  color:var(--theme-flame1); line-height:1;
+  filter:drop-shadow(0 4px 16px rgba(255,0,128,.4));
+}
+.forfeit-text {
+  font-family:'Baloo 2',sans-serif; font-size:20px; font-weight:800;
+  color:var(--text); line-height:1.3; max-width:280px;
+}
+.forfeit-emoji-big { font-size:48px; }
+.forfeit-done-btn {
+  width:100%; max-width:280px; padding:14px;
+  border:none; border-radius:16px; cursor:pointer;
+  font-family:'Baloo 2',sans-serif; font-size:16px; font-weight:800;
+  background:var(--bg3); color:var(--text);
+  border:1.5px solid var(--border);
+  transition:all .18s; -webkit-tap-highlight-color:transparent;
+}
+
+/* Forfeit dashboard card */
+.forfeit-card {
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:16px; padding:14px 16px; margin-bottom:12px;
+  position:relative; overflow:hidden;
+}
+.forfeit-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--theme-g1),var(--theme-flame1));
+}
+.fc-label {
+  font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--text-dim); font-weight:700; margin-bottom:6px;
+}
+.fc-row { display:flex; align-items:center; gap:10px; }
+.fc-avatar { font-size:26px; }
+.fc-info { flex:1; }
+.fc-name {
+  font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:800;
+  color:var(--text); line-height:1.2;
+}
+.fc-forfeit { font-size:12px; color:var(--text-muted); margin-top:2px; }
+
 /* ════════════════
    ANGIE'S COOKED POKE
 ════════════════ */
@@ -2422,7 +2531,7 @@ syncHtmlBg('loading');
   <div class="ls-inner">
     <div class="ls-logo">Gang Gang</div>
     <div class="ls-tagline">Mood Tracker</div>
-    <div class="ls-version">v3.0</div>
+    <div class="ls-version">v4.0</div>
     <div class="ls-avatars">
     <span class="ls-av" id="lsAv-vihara">👌</span>
     <span class="ls-av" id="lsAv-bigd">💪</span>
@@ -2438,6 +2547,38 @@ syncHtmlBg('loading');
   </div>
 </div>
 
+
+<!-- ════ FORFEIT WHEEL MODAL ════ -->
+<div id="forfeitModal">
+  <div class="forfeit-sheet">
+    <div class="forfeit-handle"></div>
+    <div class="forfeit-title">💀 You lost your streak!</div>
+    <div class="forfeit-sub">Spin the wheel to claim your forfeit</div>
+
+    <!-- Wheel phase -->
+    <div id="forfeitWheelPhase">
+      <div class="forfeit-wheel-wrap">
+        <div class="forfeit-pointer">▼</div>
+        <canvas id="forfeitCanvas" class="forfeit-wheel" width="260" height="260"></canvas>
+      </div>
+      <button class="forfeit-spin-btn" id="forfeitSpinBtn" onclick="spinForfeitWheel()">
+        🎰 Spin the wheel
+      </button>
+    </div>
+
+    <!-- Reveal phase -->
+    <div class="forfeit-reveal" id="forfeitReveal">
+      <div class="forfeit-emoji-big">😬</div>
+      <div class="forfeit-number-big" id="forfeitNumber"></div>
+      <div class="forfeit-text" id="forfeitText"></div>
+      <button class="forfeit-done-btn" onclick="closeForfeitModal()">
+        😤 I accept my fate
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Forfeit card slot on dashboard -->
 <!-- ════ SHEET BACKDROP ════ -->
 <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeAllSheets()"></div>
 
@@ -2760,6 +2901,9 @@ syncHtmlBg('loading');
       <!-- ② Poke slot -->
       <div id="pokeSlot"></div>
 
+      <!-- ② Forfeit card -->
+      <div id="forfeitCardSlot"></div>
+
       <!-- ② Angie's cooked poke -->
       <div id="cookedSlot"></div>
 
@@ -2911,8 +3055,8 @@ syncHtmlBg('loading');
   <div class="wn-backdrop" onclick="closeWhatsNew()"></div>
   <div class="wn-sheet">
     <div class="wn-hero">
-      <div class="wn-version">✦ Version 3.0</div>
-      <div class="wn-title">Gang Gang 3.0<br>is here 🚀</div>
+      <div class="wn-version">✦ Version 4.0</div>
+      <div class="wn-title">Gang Gang 4.0<br>is here 🚀</div>
       <div class="wn-subtitle">Big update — here's what's new</div>
     </div>
     <div class="wn-body">
@@ -2924,10 +3068,17 @@ syncHtmlBg('loading');
         </div>
       </div>
       <div class="wn-feature">
-        <div class="wn-feat-icon">😎</div>
+        <div class="wn-feat-icon">👇</div>
         <div class="wn-feat-text">
-          <div class="wn-feat-title">Vibe Tags — Rebuilt</div>
-          <div class="wn-feat-desc">Pick a vibe tag when you log your mood. Now stored properly in the database so the whole gang sees it in real time.</div>
+          <div class="wn-feat-title">Poke Someone for Fun</div>
+          <div class="wn-feat-desc">Send a cheeky poke to any gang member with a range of messages. Find it on the dashboard — go on, poke someone.</div>
+        </div>
+      </div>
+      <div class="wn-feature">
+        <div class="wn-feat-icon">🤫</div>
+        <div class="wn-feat-text">
+          <div class="wn-feat-title">A Secret Has Been Added</div>
+          <div class="wn-feat-desc">Something sneaky has been hidden in the app. You'll know it when you find it... or when it finds you.</div>
         </div>
       </div>
       <div class="wn-feature">
@@ -3549,8 +3700,9 @@ function login(memberId) {
   switchTab('dashboard',document.querySelector('.nav-item[data-tab="dashboard"]'));
   setMobNav('dashboard');
   refreshAll();
+  setTimeout(checkStreakBroken, 800); // check after data loads
   // Show what's new if this version hasn't been seen by this user
-  const wnKey = `gang_wn_3.1_${currentUser.id}`;
+  const wnKey = `gang_wn_4.0_${currentUser.id}`;
   if(!localStorage.getItem(wnKey)) {
     setTimeout(() => showWhatsNew(), 600);
   }
@@ -3665,7 +3817,7 @@ function closeWhatsNew() {
   const modal = document.getElementById('whatsNewModal');
   modal.classList.remove('open');
   // Mark as seen for this user and version
-  const wnKey = `gang_wn_3.1_${currentUser?.id}`;
+  const wnKey = `gang_wn_4.0_${currentUser?.id}`;
   if(wnKey) localStorage.setItem(wnKey, '1');
 }
 
@@ -3742,6 +3894,7 @@ function refreshAll() {
   renderLoveLetterCard();
   renderPokeCard();
   renderCookedCard();
+  renderForfeitCard();
   renderGroupStreak();
   const active=document.querySelector('.tab-pane.active');
   if(active&&active.id.startsWith('tab-member-')){
@@ -5065,6 +5218,195 @@ function pokeOnCooldown() {
   return last && (Date.now() - last) < 60000; // 1 min cooldown
 }
 
+
+
+// ══════════════════════════════════════════════
+//  FORFEIT WHEEL
+// ══════════════════════════════════════════════
+const FORFEITS = [
+  { n:1, text:"Post an embarrassing photo to the gang",        emoji:"📸" },
+  { n:2, text:"Do 20 push ups on camera",                      emoji:"💪" },
+  { n:3, text:"Change your profile pic for a week",            emoji:"🖼️" },
+  { n:4, text:"Sing a song and send it to the gang",           emoji:"🎤" },
+  { n:5, text:"Let the gang pick your outfit for a day",       emoji:"👗" },
+  { n:6, text:"Eat something you hate on camera",              emoji:"🤢" },
+  { n:7, text:"Send your most recent camera roll photo",       emoji:"🤳" },
+  { n:8, text:"Send a cringey streak snap on Snapchat",        emoji:"👻" },
+];
+
+let forfeitSpun = false;
+let forfeitLandedIndex = null;
+
+function drawForfeitWheel() {
+  const canvas = document.getElementById('forfeitCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 130, cy = 130, r = 126;
+  const slices = FORFEITS.length;
+  const angle = (2 * Math.PI) / slices;
+  const colors = ['#7e22ce','#9333ea','#a855f7','#c084fc','#9333ea','#7e22ce','#6b21a8','#a855f7'];
+
+  ctx.clearRect(0, 0, 260, 260);
+  FORFEITS.forEach((f, i) => {
+    const start = i * angle - Math.PI / 2;
+    const end   = start + angle;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.15)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Number label
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(start + angle / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 26px "Baloo 2", sans-serif';
+    ctx.fillText(f.n, r - 18, 9);
+    ctx.restore();
+  });
+
+  // Centre circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a0533';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.2)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function spinForfeitWheel() {
+  if(forfeitSpun) return;
+  forfeitSpun = true;
+  const btn = document.getElementById('forfeitSpinBtn');
+  if(btn) btn.disabled = true;
+
+  // Pick random landing index
+  forfeitLandedIndex = Math.floor(Math.random() * FORFEITS.length);
+  const slices = FORFEITS.length;
+  const sliceAngle = 360 / slices;
+
+  // Calculate rotation: multiple full spins + land on correct slice
+  // Pointer is at top (0deg), slice 0 starts at top
+  const targetAngle = 360 * 8 + (slices - forfeitLandedIndex) * sliceAngle - sliceAngle / 2;
+
+  const canvas = document.getElementById('forfeitCanvas');
+  if(canvas) {
+    canvas.style.transition = 'transform 4s cubic-bezier(.17,.67,.12,.99)';
+    canvas.style.transform = `rotate(${targetAngle}deg)`;
+  }
+
+  // After spin ends, show reveal
+  setTimeout(() => showForfeitReveal(forfeitLandedIndex), 4200);
+}
+
+function showForfeitReveal(idx) {
+  const forfeit = FORFEITS[idx];
+  document.getElementById('forfeitWheelPhase').style.display = 'none';
+  const reveal = document.getElementById('forfeitReveal');
+  document.getElementById('forfeitNumber').textContent = forfeit.n;
+  document.getElementById('forfeitText').textContent = forfeit.text;
+  reveal.querySelector('.forfeit-emoji-big').textContent = forfeit.emoji;
+  reveal.classList.add('show');
+
+  // Save to Supabase and notify gang
+  saveForfeit(forfeit);
+}
+
+async function saveForfeit(forfeit) {
+  if(!db.url || !db.key || !currentUser) return;
+  try {
+    await fetch(`${db.url}/rest/v1/forfeits`, {
+      method: 'POST',
+      headers: { ...db._headers(), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        member_id: currentUser.id,
+        member_name: currentUser.name,
+        member_avatar: currentUser.avatar,
+        forfeit_number: forfeit.n,
+        forfeit_text: forfeit.text,
+        forfeit_date: todayKey()
+      })
+    });
+  } catch(e) { console.warn('Forfeit save failed:', e); }
+}
+
+function closeForfeitModal() {
+  document.getElementById('forfeitModal').classList.remove('open');
+  // Mark as shown so it doesnt appear again
+  const key = `gang_forfeit_shown_${currentUser.id}_${todayKey()}`;
+  localStorage.setItem(key, '1');
+  renderForfeitCard();
+}
+
+function checkStreakBroken() {
+  if(!currentUser) return;
+  const entries = db.getEntries(currentUser.id);
+  if(!entries.length) return;
+
+  const today = todayKey();
+  const shownKey = `gang_forfeit_shown_${currentUser.id}_${today}`;
+  if(localStorage.getItem(shownKey)) return; // already shown today
+
+  // Find the last logged date
+  const sorted = [...entries].sort((a,b)=>b.date.localeCompare(a.date));
+  const lastDate = sorted[0].date;
+
+  // If last log was more than 1 day ago, streak is broken
+  const last = new Date(lastDate + 'T00:00:00');
+  const now  = new Date();
+  now.setHours(0,0,0,0);
+  const daysSince = Math.round((now - last) / 864e5);
+
+  if(daysSince < 2) return; // streak intact or just started
+
+  // Check they actually HAD a streak (at least 2 consecutive days before)
+  const streak = calcStreak(entries);
+  // Streak would be 0 if broken — check if they had entries 2+ days in a row before
+  // Simple check: if there are entries and last was 2+ days ago, they broke it
+  if(daysSince >= 2 && sorted.length >= 2) {
+    setTimeout(() => {
+      drawForfeitWheel();
+      document.getElementById('forfeitModal').classList.add('open');
+    }, 1500);
+  }
+}
+
+// Render forfeit card on dashboard (shows other members forfeits)
+async function renderForfeitCard() {
+  const slot = document.getElementById('forfeitCardSlot');
+  if(!slot || !currentUser || !db.url || !db.key) return;
+
+  try {
+    const res = await fetch(
+      `${db.url}/rest/v1/forfeits?forfeit_date=eq.${todayKey()}&member_id=neq.${currentUser.id}&order=created_at.desc`,
+      { headers: db._headers() }
+    );
+    if(!res.ok) { slot.innerHTML=''; return; }
+    const rows = await res.json();
+    if(!rows.length) { slot.innerHTML=''; return; }
+
+    const cards = rows.map(r => `
+      <div class="fc-row">
+        <div class="fc-avatar">${r.member_avatar}</div>
+        <div class="fc-info">
+          <div class="fc-name">${r.member_name} lost their streak 💀</div>
+          <div class="fc-forfeit">Forfeit #${r.forfeit_number}: ${r.forfeit_text}</div>
+        </div>
+      </div>`).join('');
+
+    slot.innerHTML = `<div class="forfeit-card">
+      <div class="fc-label">💀 Streak forfeits today</div>
+      ${cards}
+    </div>`;
+  } catch(e) { slot.innerHTML=''; }
+}
 
 // ══════════════════════════════════════════════
 //  ANGIE'S SECRET COOKED POKE 😮‍💨
