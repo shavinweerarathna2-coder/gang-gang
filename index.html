@@ -1958,7 +1958,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   .content-area { height:auto; overflow:visible; flex:1; display:flex; flex-direction:column; min-height:0; }
   .tab-pane {
     display:none; overflow-y:auto; overflow-x:hidden; flex:1;
-    padding:10px 12px calc(var(--mobile-nav-h) + var(--safe-bottom) + 40px);
+    padding:10px 12px calc(var(--mobile-nav-h) + var(--safe-bottom) + 70px);
     -webkit-overflow-scrolling:touch;
     overscroll-behavior-y:contain;
   }
@@ -3521,7 +3521,7 @@ async function registerPush(memberId) {
 
 // Register service worker on load
 if('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
+  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(e => console.warn('SW:', e));
 }
 
 function login(memberId) {
@@ -3570,7 +3570,7 @@ async function enableNotifsFromSettings() {
   }
   if(status) status.textContent = 'Enabling…';
   try {
-    const reg = await navigator.serviceWorker.register('/sw.js');
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
     if(permission !== 'granted') {
@@ -3626,7 +3626,7 @@ async function enableNotifsFromModal() {
     if(!db.url || !db.key) throw new Error('Supabase not connected');
 
     // Step 2: register SW
-    const reg = await navigator.serviceWorker.register('/sw.js');
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     await navigator.serviceWorker.ready;
 
     // Step 3: request permission
@@ -5136,10 +5136,10 @@ async function sendCooked() {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+db.key },
       body: JSON.stringify({
-        from_name: 'Angie',
-        from_avatar: '🦋',
+        from_name: currentUser.name,
+        from_avatar: currentUser.avatar,
         target_ids: [cookedSelected],
-        custom_title: '🦋 Angie says…',
+        custom_title: `${currentUser.avatar} ${currentUser.name} says…`,
         custom_body: poke.body
       })
     });
