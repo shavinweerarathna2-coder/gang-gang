@@ -1699,6 +1699,221 @@ body.compact-mode .gang-rank-list { gap:0; }
 
 
 
+
+/* ════════════════
+   GAMES TAB
+════════════════ */
+@keyframes floatBob   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+@keyframes glowPulse  { 0%,100%{opacity:.6} 50%{opacity:1} }
+@keyframes slideInUp  { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes badgePop   { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+@keyframes scanline   { 0%{background-position:0 0} 100%{background-position:0 100%} }
+
+/* Hero banner */
+.games-hero {
+  position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#0d0d1a 0%,#1a0533 40%,#2d0a4e 100%);
+  border-radius:20px; padding:22px 20px 18px;
+  margin-bottom:18px;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.games-hero::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:22px 22px;
+}
+.games-hero::after {
+  content:''; position:absolute;
+  width:200px; height:200px; border-radius:50%;
+  background:radial-gradient(circle,rgba(255,0,128,.35) 0%,transparent 70%);
+  bottom:-60px; right:-40px; pointer-events:none;
+  animation:glowPulse 3s ease-in-out infinite;
+}
+.games-orb {
+  position:absolute; width:160px; height:160px; border-radius:50%;
+  background:radial-gradient(circle,rgba(147,51,234,.4) 0%,transparent 70%);
+  top:-50px; left:-30px; pointer-events:none;
+  animation:glowPulse 4s ease-in-out infinite reverse;
+}
+.games-hero-inner { position:relative; z-index:1; }
+.games-title {
+  font-family:'Baloo 2',sans-serif; font-size:28px; font-weight:800;
+  color:#fff; line-height:1; letter-spacing:-.02em;
+  text-shadow:0 2px 12px rgba(255,0,128,.3);
+}
+.games-title span { color:var(--theme-flame1); }
+.games-sub {
+  font-size:12px; color:rgba(255,255,255,.55); margin-top:4px;
+  letter-spacing:.08em;
+}
+.games-hero-emoji {
+  font-size:48px; position:absolute; right:16px; top:12px; z-index:1;
+  animation:floatBob 3s ease-in-out infinite;
+  filter:drop-shadow(0 4px 12px rgba(255,0,128,.4));
+}
+
+/* Section label */
+.games-pick-label {
+  font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--text-dim); font-weight:700; margin-bottom:12px;
+}
+
+/* Game cards grid */
+.games-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px;
+}
+.game-card {
+  position:relative; overflow:hidden;
+  border-radius:18px; padding:18px 14px 14px; cursor:pointer;
+  transition:transform .18s, box-shadow .18s;
+  -webkit-tap-highlight-color:transparent;
+  display:flex; flex-direction:column; gap:5px;
+  animation:slideInUp .4s ease both;
+}
+.game-card:nth-child(1) { animation-delay:.05s; }
+.game-card:nth-child(2) { animation-delay:.12s; }
+.game-card:nth-child(3) { animation-delay:.19s; }
+
+/* Noughts card — electric purple */
+.game-card.ttt-card {
+  background:linear-gradient(135deg,#2e1065 0%,#4c1d95 50%,#7c3aed 100%);
+  box-shadow:0 6px 24px rgba(124,58,237,.4);
+  border:1px solid rgba(167,139,250,.25);
+}
+.game-card.ttt-card:active { transform:scale(.96); box-shadow:0 2px 10px rgba(124,58,237,.3); }
+.game-card.coming-soon {
+  background:var(--bg2); border:1.5px dashed var(--border);
+  opacity:.5; cursor:default;
+}
+.game-card.coming-soon:active { transform:none; }
+
+/* Card dot mesh */
+.game-card::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.07) 1px,transparent 1px);
+  background-size:18px 18px;
+}
+.game-card-icon {
+  font-size:34px; position:relative; z-index:1;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));
+  animation:floatBob 3.5s ease-in-out infinite;
+}
+.game-card-name {
+  font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:800;
+  color:#fff; line-height:1.2; position:relative; z-index:1;
+}
+.game-card.coming-soon .game-card-name { color:var(--text); }
+.game-card-desc {
+  font-size:11px; color:rgba(255,255,255,.6);
+  position:relative; z-index:1;
+}
+.game-card.coming-soon .game-card-desc { color:var(--text-dim); }
+.game-card-play {
+  margin-top:6px; display:inline-block; position:relative; z-index:1;
+  background:rgba(255,255,255,.18); border-radius:100px;
+  padding:3px 12px; font-size:10px; font-weight:800;
+  color:#fff; letter-spacing:.1em; text-transform:uppercase;
+}
+
+/* Active games */
+.active-games-label {
+  font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--text-dim); font-weight:700; margin-bottom:10px;
+}
+.active-game-row {
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:16px; padding:13px 14px; margin-bottom:8px;
+  display:flex; align-items:center; gap:12px; cursor:pointer;
+  transition:all .15s; -webkit-tap-highlight-color:transparent;
+  position:relative; overflow:hidden;
+}
+.active-game-row::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:linear-gradient(180deg,var(--theme-g1),var(--theme-flame1));
+  border-radius:3px 0 0 3px;
+}
+.active-game-row:active { background:var(--bg3); transform:scale(.99); }
+.agr-icon { font-size:26px; flex-shrink:0; }
+.agr-info { flex:1; min-width:0; }
+.agr-name {
+  font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:700;
+  color:var(--text);
+}
+.agr-status { font-size:12px; color:var(--text-dim); margin-top:2px; }
+.agr-badge {
+  background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
+  color:#fff; font-size:10px; font-weight:800; border-radius:100px;
+  padding:4px 11px; font-family:'Baloo 2',sans-serif; letter-spacing:.05em;
+  animation:badgePop .4s cubic-bezier(.175,.885,.32,1.275) both;
+  box-shadow:0 2px 10px rgba(255,0,128,.3);
+}
+
+/* Opponent picker */
+.opp-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  margin-top:14px;
+}
+.opp-btn {
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:14px; padding:14px 8px; cursor:pointer;
+  transition:all .18s; -webkit-tap-highlight-color:transparent;
+}
+.opp-btn:active { transform:scale(.94); background:var(--blue-dim); border-color:var(--blue-dark); }
+.opp-btn .opp-avatar { font-size:30px; }
+.opp-btn .opp-name { font-size:11px; font-weight:700; color:var(--text); }
+
+/* TTT board */
+.ttt-modal {
+  position:fixed; inset:0; z-index:9400;
+  background:rgba(0,0,0,.75); backdrop-filter:blur(4px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+  pointer-events:none;
+}
+.ttt-modal.open { opacity:1; visibility:visible; pointer-events:all; }
+.ttt-sheet {
+  background:var(--bg2); border-radius:28px 28px 0 0;
+  padding:24px 24px 48px; width:100%; max-width:480px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+.ttt-modal.open .ttt-sheet { transform:translateY(0); }
+.ttt-handle {
+  width:40px; height:4px; background:var(--border2);
+  border-radius:100px; margin:0 auto 18px;
+}
+.ttt-header { text-align:center; margin-bottom:16px; }
+.ttt-vs {
+  font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:800;
+  color:var(--text);
+}
+.ttt-turn { font-size:13px; color:var(--text-dim); margin-top:4px; }
+.ttt-board {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:8px; max-width:280px; margin:0 auto 20px;
+}
+.ttt-cell {
+  aspect-ratio:1; background:var(--bg3); border:2px solid var(--border);
+  border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-size:32px; cursor:pointer; transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ttt-cell:active { transform:scale(.93); }
+.ttt-cell.taken { cursor:default; }
+.ttt-cell.win-cell { background:var(--blue-dim); border-color:var(--blue-dark); }
+.ttt-result {
+  text-align:center; margin-bottom:16px;
+  font-family:'Baloo 2',sans-serif; font-size:20px; font-weight:800;
+  color:var(--text); display:none;
+}
+.ttt-result.show { display:block; }
+.ttt-close-btn {
+  width:100%; padding:14px; border:none; border-radius:14px; cursor:pointer;
+  font-family:'Baloo 2',sans-serif; font-size:15px; font-weight:800;
+  background:var(--bg3); color:var(--text); border:1.5px solid var(--border);
+  -webkit-tap-highlight-color:transparent;
+}
+
 /* ════════════════
    FORFEIT WHEEL MODAL
 ════════════════ */
@@ -1788,26 +2003,35 @@ body.compact-mode .gang-rank-list { gap:0; }
 
 /* Forfeit dashboard card */
 .forfeit-card {
-  background:var(--bg2); border:1.5px solid var(--border);
+  background:linear-gradient(135deg,#1a0a0a 0%,#2d0a0a 50%,#1a0a1a 100%);
+  border:1.5px solid rgba(255,60,60,.3);
   border-radius:16px; padding:14px 16px; margin-bottom:12px;
   position:relative; overflow:hidden;
+  box-shadow:0 4px 20px rgba(220,38,38,.2);
 }
-.forfeit-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-  background:linear-gradient(90deg,var(--theme-g1),var(--theme-flame1));
+.forfeit-card::before { display:none; }
+.forfeit-card::after {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:18px 18px;
 }
 .fc-label {
-  font-size:9px; letter-spacing:.2em; text-transform:uppercase;
-  color:var(--text-dim); font-weight:700; margin-bottom:6px;
+  font-family:'Baloo 2',sans-serif; font-size:15px; font-weight:800;
+  color:rgba(255,120,120,.9); margin-bottom:10px;
+  position:relative; z-index:1;
 }
-.fc-row { display:flex; align-items:center; gap:10px; }
-.fc-avatar { font-size:26px; }
+.fc-row { display:flex; align-items:center; gap:12px; position:relative; z-index:1; }
+.fc-avatar { font-size:30px; }
 .fc-info { flex:1; }
 .fc-name {
   font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:800;
-  color:var(--text); line-height:1.2;
+  color:#fff; line-height:1.2;
 }
-.fc-forfeit { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.fc-forfeit {
+  font-size:12px; color:rgba(255,255,255,.7); margin-top:4px;
+  background:rgba(220,38,38,.2); border:1px solid rgba(255,60,60,.25);
+  border-radius:8px; padding:4px 8px; display:inline-block;
+}
 
 /* ════════════════
    ANGIE'S COOKED POKE
@@ -2550,6 +2774,28 @@ syncHtmlBg('loading');
 </div>
 
 
+
+<!-- ════ OPPONENT PICKER SHEET ════ -->
+<div class="bottom-sheet" id="oppSheet" style="max-height:70vh;overflow-y:auto">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="oppSheetTitle">Choose opponent</div>
+  <div class="opp-grid" id="oppGrid"></div>
+</div>
+
+<!-- ════ NOUGHTS & CROSSES MODAL ════ -->
+<div class="ttt-modal" id="tttModal">
+  <div class="ttt-sheet">
+    <div class="ttt-handle"></div>
+    <div class="ttt-header">
+      <div class="ttt-vs" id="tttVs"></div>
+      <div class="ttt-turn" id="tttTurn"></div>
+    </div>
+    <div class="ttt-board" id="tttBoard"></div>
+    <div class="ttt-result" id="tttResult"></div>
+    <button class="ttt-close-btn" id="tttCloseBtn" onclick="closeTTT()">Close</button>
+  </div>
+</div>
+
 <!-- ════ FORFEIT WHEEL MODAL ════ -->
 <div id="forfeitModal">
   <div class="forfeit-sheet">
@@ -2597,6 +2843,10 @@ syncHtmlBg('loading');
   <div class="sheet-handle"></div>
   <div class="sheet-title">More</div>
   <div class="sheet-actions" style="margin-top:14px">
+    <div class="sheet-action-btn" onclick="closeAllSheets();openMemberSheet()">
+      <span class="sheet-action-icon">👥</span>
+      <div><div class="sheet-action-text">The Gang</div><div class="sheet-action-sub">View member pages</div></div>
+    </div>
     <div class="sheet-action-btn" onclick="closeAllSheets();switchTab('leaderboard',null)">
       <span class="sheet-action-icon">🏆</span>
       <div><div class="sheet-action-text">Leaderboard</div><div class="sheet-action-sub">See today's rankings</div></div>
@@ -2944,6 +3194,79 @@ syncHtmlBg('loading');
 
     </div>
 
+
+    <!-- ── GAMES ── -->
+    <div class="tab-pane" id="tab-games">
+      <!-- Hero banner -->
+      <div class="games-hero">
+        <div class="games-orb"></div>
+        <div class="games-hero-emoji">🎮</div>
+        <div class="games-hero-inner">
+          <div class="games-title">Gang<span> Games</span></div>
+          <div class="games-sub">Pick a game · Challenge someone · Win bragging rights</div>
+        </div>
+      </div>
+
+      <!-- Active games -->
+      <div id="activeGamesSlot"></div>
+
+      <!-- Game picker -->
+      <div class="games-pick-label">Choose your game</div>
+      <div class="games-grid">
+        <div class="game-card ttt-card" onclick="startGameFlow('ttt')">
+          <div class="game-card-icon">⭕</div>
+          <div class="game-card-name">Noughts &amp; Crosses</div>
+          <div class="game-card-desc">Classic 3×3 battle</div>
+          <div class="game-card-play">Play now</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🔴</div>
+          <div class="game-card-name">Connect 4</div>
+          <div class="game-card-desc">Coming soon</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">✊</div>
+          <div class="game-card-name">Rock Paper Scissors</div>
+          <div class="game-card-desc">Coming soon</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🎲</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">Who's feeling lucky?</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🃏</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">Shuffle and deal</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🎯</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">Aim and fire</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🧩</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">Piece it together</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">⚡</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">Lightning fast</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🏆</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">For the glory</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🎪</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">Expect the unexpected</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── LEADERBOARD ── -->
     <div class="tab-pane" id="tab-leaderboard">
 
@@ -3036,8 +3359,8 @@ syncHtmlBg('loading');
       <button class="mob-nav-btn" id="mnb-me" onclick="switchToMyPage()">
         <span class="mob-nav-icon" id="mnb-me-icon">🌸</span><span class="mob-nav-label">My Page</span>
       </button>
-      <button class="mob-nav-btn" id="mnb-gang" onclick="openMemberSheet()">
-        <span class="mob-nav-icon">👥</span><span class="mob-nav-label">Gang</span>
+      <button class="mob-nav-btn" id="mnb-games" onclick="switchTab('games',null);setMobNav('games')">
+        <span class="mob-nav-icon">🎮</span><span class="mob-nav-label">Games</span>
       </button>
       <button class="mob-nav-btn" id="mnb-leaderboard" onclick="switchTab('leaderboard',null);setMobNav('leaderboard')">
         <span class="mob-nav-icon">🏆</span><span class="mob-nav-label">Ranks</span>
@@ -3897,6 +4220,7 @@ function refreshAll() {
   renderPokeCard();
   renderCookedCard();
   renderForfeitCard();
+  renderActiveGames();
   renderGroupStreak();
   const active=document.querySelector('.tab-pane.active');
   if(active&&active.id.startsWith('tab-member-')){
@@ -5222,6 +5546,300 @@ function pokeOnCooldown() {
 
 
 
+
+// ══════════════════════════════════════════════
+//  GAMES
+// ══════════════════════════════════════════════
+let currentGame = null; // { id, type, mySymbol, oppId, board, myTurn }
+let pendingGameType = null;
+
+function startGameFlow(type) {
+  pendingGameType = type;
+  // Show opponent picker
+  const others = MEMBERS.filter(m => m.id !== currentUser.id);
+  const grid = document.getElementById('oppGrid');
+  const title = document.getElementById('oppSheetTitle');
+  if(title) title.textContent = 'Who do you want to challenge?';
+  if(grid) {
+    grid.innerHTML = others.map(m => `
+      <div class="opp-btn" onclick="createGame('${type}','${m.id}')">
+        <span class="opp-avatar">${m.avatar}</span>
+        <span class="opp-name">${m.name}</span>
+      </div>`).join('');
+  }
+  openSheet('oppSheet');
+}
+
+async function createGame(type, oppId) {
+  closeAllSheets();
+  if(!db.url || !db.key) { showToast('Supabase not connected'); return; }
+  const opp = MEMBERS.find(m => m.id === oppId);
+  showToast(`Inviting ${opp.name}… 🎮`);
+
+  try {
+    const res = await fetch(`${db.url}/rest/v1/game_sessions`, {
+      method: 'POST',
+      headers: { ...db._headers(), 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        type,
+        player_x: currentUser.id,
+        player_o: oppId,
+        board: JSON.stringify(['','','','','','','','','']),
+        current_turn: currentUser.id,
+        status: 'pending',
+        winner: null,
+        created_at: new Date().toISOString()
+      })
+    });
+    if(!res.ok) throw new Error('Failed to create game');
+    const [game] = await res.json();
+
+    // Notify opponent
+    await fetch(`${db.url}/functions/v1/notify-game`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+db.key },
+      body: JSON.stringify({
+        from_name: currentUser.name,
+        from_avatar: currentUser.avatar,
+        to_id: oppId,
+        game_id: game.id,
+        game_type: type
+      })
+    }).catch(() => {}); // non-fatal if push fails
+
+    showToast(`${opp.name} has been challenged! 🎮`);
+    renderActiveGames();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+async function renderActiveGames() {
+  const slot = document.getElementById('activeGamesSlot');
+  if(!slot || !currentUser || !db.url || !db.key) return;
+
+  try {
+    const res = await fetch(
+      `${db.url}/rest/v1/game_sessions?or=(player_x.eq.${currentUser.id},player_o.eq.${currentUser.id})&status=neq.finished&order=created_at.desc`,
+      { headers: db._headers() }
+    );
+    if(!res.ok) { slot.innerHTML=''; return; }
+    const games = await res.json();
+    if(!games.length) { slot.innerHTML=''; return; }
+
+    const rows = games.map(g => {
+      const isX   = g.player_x === currentUser.id;
+      const oppId = isX ? g.player_o : g.player_x;
+      const opp   = MEMBERS.find(m => m.id === oppId);
+      const myTurn = g.current_turn === currentUser.id;
+      const isPending = g.status === 'pending' && !isX;
+      let status = myTurn ? "Your turn! 👉" : `${opp?.name}'s turn`;
+      if(isPending) status = "Tap to accept challenge 🎮";
+      return `<div class="active-game-row" onclick="openGame('${g.id}')">
+        <div class="agr-icon">⭕</div>
+        <div class="agr-info">
+          <div class="agr-name">vs ${opp?.avatar} ${opp?.name}</div>
+          <div class="agr-status">${status}</div>
+        </div>
+        ${(myTurn || isPending) ? '<div class="agr-badge">GO</div>' : ''}
+      </div>`;
+    }).join('');
+
+    slot.innerHTML = `<div class="active-games-label">Active games</div>${rows}`;
+  } catch(e) { slot.innerHTML=''; }
+}
+
+async function openGame(gameId) {
+  if(!db.url || !db.key) return;
+  try {
+    const res = await fetch(
+      `${db.url}/rest/v1/game_sessions?id=eq.${gameId}`,
+      { headers: db._headers() }
+    );
+    const [g] = await res.json();
+    if(!g) return;
+
+    // Accept if pending and I'm player O
+    if(g.status === 'pending' && g.player_o === currentUser.id) {
+      await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${gameId}`, {
+        method: 'PATCH',
+        headers: db._headers(),
+        body: JSON.stringify({ status: 'active' })
+      });
+      g.status = 'active';
+    }
+
+    const isX   = g.player_x === currentUser.id;
+    const oppId = isX ? g.player_o : g.player_x;
+    const opp   = MEMBERS.find(m => m.id === oppId);
+
+    currentGame = {
+      id: gameId,
+      type: g.type,
+      mySymbol: isX ? 'X' : 'O',
+      oppId,
+      board: JSON.parse(g.board),
+      myTurn: g.current_turn === currentUser.id,
+      status: g.status,
+      winner: g.winner
+    };
+
+    openTTT(opp, g);
+  } catch(e) { showToast('Error loading game'); }
+}
+
+function openTTT(opp, g) {
+  const modal = document.getElementById('tttModal');
+  const vsEl  = document.getElementById('tttVs');
+  const turnEl = document.getElementById('tttTurn');
+  const resultEl = document.getElementById('tttResult');
+
+  vsEl.textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
+
+  if(g.status === 'finished') {
+    const won = g.winner === currentUser.id;
+    const draw = g.winner === 'draw';
+    resultEl.textContent = draw ? "It's a draw! 🤝" : won ? "You won! 🎉" : "You lost 💀";
+    resultEl.classList.add('show');
+    turnEl.textContent = '';
+    document.getElementById('tttCloseBtn').textContent = 'Close';
+  } else {
+    resultEl.classList.remove('show');
+    turnEl.textContent = currentGame.myTurn ? "Your turn 👉" : `Waiting for ${opp.name}…`;
+  }
+
+  renderTTTBoard();
+  modal.classList.add('open');
+
+  // Poll for opponent move if not my turn
+  if(!currentGame.myTurn && g.status !== 'finished') {
+    pollForMove();
+  }
+}
+
+function renderTTTBoard() {
+  const board = document.getElementById('tttBoard');
+  if(!board || !currentGame) return;
+  const symbols = { 'X': currentUser.avatar, 'O': MEMBERS.find(m=>m.id===currentGame.oppId)?.avatar || '⭕' };
+  // Swap if I'm O
+  if(currentGame.mySymbol === 'O') {
+    symbols.O = currentUser.avatar;
+    symbols.X = MEMBERS.find(m=>m.id===currentGame.oppId)?.avatar || '❌';
+  }
+
+  board.innerHTML = currentGame.board.map((cell, i) => {
+    const canClick = currentGame.myTurn && cell === '' && currentGame.status === 'active';
+    return `<div class="ttt-cell${cell ? ' taken' : ''}" ${canClick ? `onclick="makeMove(${i})"` : ''}>
+      ${cell ? symbols[cell] : ''}
+    </div>`;
+  }).join('');
+}
+
+async function makeMove(idx) {
+  if(!currentGame || !currentGame.myTurn) return;
+  const board = [...currentGame.board];
+  board[idx] = currentGame.mySymbol;
+  currentGame.board = board;
+  currentGame.myTurn = false;
+
+  const winner = checkTTTWinner(board);
+  const isDraw = !winner && board.every(c => c !== '');
+  const finished = winner || isDraw;
+
+  const patch = {
+    board: JSON.stringify(board),
+    current_turn: currentGame.oppId,
+    ...(finished ? {
+      status: 'finished',
+      winner: isDraw ? 'draw' : currentUser.id
+    } : {})
+  };
+
+  renderTTTBoard();
+  document.getElementById('tttTurn').textContent = finished ? '' : `Waiting for opponent…`;
+
+  if(finished) {
+    const resultEl = document.getElementById('tttResult');
+    resultEl.textContent = isDraw ? "It's a draw! 🤝" : "You won! 🎉";
+    resultEl.classList.add('show');
+  }
+
+  // Save to Supabase
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentGame.id}`, {
+      method: 'PATCH',
+      headers: db._headers(),
+      body: JSON.stringify(patch)
+    });
+    // Notify opponent it's their turn
+    if(!finished) {
+      fetch(`${db.url}/functions/v1/notify-game`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+db.key },
+        body: JSON.stringify({
+          from_name: currentUser.name,
+          from_avatar: currentUser.avatar,
+          to_id: currentGame.oppId,
+          game_id: currentGame.id,
+          game_type: 'ttt',
+          is_turn: true
+        })
+      }).catch(()=>{});
+    }
+  } catch(e) { console.warn('Move save failed:', e); }
+}
+
+function checkTTTWinner(board) {
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(const [a,b,c] of lines) {
+    if(board[a] && board[a]===board[b] && board[a]===board[c]) return board[a];
+  }
+  return null;
+}
+
+let tttPollTimer = null;
+function pollForMove() {
+  clearInterval(tttPollTimer);
+  tttPollTimer = setInterval(async () => {
+    if(!currentGame || currentGame.myTurn) { clearInterval(tttPollTimer); return; }
+    try {
+      const res = await fetch(
+        `${db.url}/rest/v1/game_sessions?id=eq.${currentGame.id}`,
+        { headers: db._headers() }
+      );
+      const [g] = await res.json();
+      if(!g) return;
+      const newBoard = JSON.parse(g.board);
+      if(JSON.stringify(newBoard) !== JSON.stringify(currentGame.board)) {
+        currentGame.board = newBoard;
+        currentGame.myTurn = g.current_turn === currentUser.id;
+        currentGame.status = g.status;
+        currentGame.winner = g.winner;
+        const opp = MEMBERS.find(m => m.id === currentGame.oppId);
+        if(g.status === 'finished') {
+          clearInterval(tttPollTimer);
+          const resultEl = document.getElementById('tttResult');
+          const won = g.winner === currentUser.id;
+          const draw = g.winner === 'draw';
+          resultEl.textContent = draw ? "It's a draw! 🤝" : won ? "You won! 🎉" : "You lost 💀";
+          resultEl.classList.add('show');
+          document.getElementById('tttTurn').textContent = '';
+        } else {
+          document.getElementById('tttTurn').textContent = "Your turn 👉";
+        }
+        renderTTTBoard();
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+function closeTTT() {
+  clearInterval(tttPollTimer);
+  document.getElementById('tttModal').classList.remove('open');
+  currentGame = null;
+  renderActiveGames();
+}
+
 // ══════════════════════════════════════════════
 //  FORFEIT WHEEL
 // ══════════════════════════════════════════════
@@ -5383,7 +6001,9 @@ function checkStreakBroken() {
 // Render forfeit card on dashboard (shows other members forfeits)
 async function renderForfeitCard() {
   const slot = document.getElementById('forfeitCardSlot');
-  if(!slot || !currentUser || !db.url || !db.key) return;
+  if(!slot || !currentUser) return;
+
+  if(!db.url || !db.key) return;
 
   try {
     const res = await fetch(
@@ -5753,7 +6373,8 @@ function hideLoadingScreen() {
   await new Promise(r => setTimeout(r, 800));
   setLoadProgress(85, 'Almost there…');
   db.load(); // initial background sync
-  db.loadNotes(); // load anonymous support notes
+  await db.loadNotes(); // load anonymous support notes
+  if(currentUser) renderLoveLetterCard(); // show notes immediately if already logged in
 
   await new Promise(r => setTimeout(r, 900));
   setLoadProgress(100, "Let's go! 🔥");
@@ -5761,8 +6382,9 @@ function hideLoadingScreen() {
 
   // ── Live polling: sync from Sheets every 30s when page is visible ──
   async function syncFromSheets() {
-    db.loadNotes();
-    if(document.hidden) return; // skip if tab not in focus
+    await db.loadNotes();
+    if(currentUser) renderLoveLetterCard(); // re-render after notes update
+    if(document.hidden) return; // skip mood sync if tab not in focus
     if(!db.url || !db.key) return; // skip if no Supabase configured
     try {
       const timeout = new Promise((_,rej)=>setTimeout(()=>rej(),8000));
