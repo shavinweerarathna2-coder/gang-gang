@@ -1837,15 +1837,27 @@ body.compact-mode .gang-rank-list { gap:0; }
 .agr-info { flex:1; min-width:0; }
 .agr-name {
   font-family:'Baloo 2',sans-serif; font-size:14px; font-weight:700;
-  color:var(--text);
+  color:var(--text); line-height:1.3;
 }
-.agr-status { font-size:12px; color:var(--text-dim); margin-top:2px; }
+.agr-vs {
+  font-size:11px; font-weight:600; color:var(--text-dim);
+  margin:0 3px;
+}
+.agr-status { font-size:12px; color:var(--text-dim); margin-top:3px; }
 .agr-badge {
   background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
-  color:#fff; font-size:10px; font-weight:800; border-radius:100px;
-  padding:4px 11px; font-family:'Baloo 2',sans-serif; letter-spacing:.05em;
+  color:#fff; font-size:13px; font-weight:800; border-radius:12px;
+  padding:10px 18px; font-family:'Baloo 2',sans-serif;
   animation:badgePop .4s cubic-bezier(.175,.885,.32,1.275) both;
-  box-shadow:0 2px 10px rgba(255,0,128,.3);
+  box-shadow:0 3px 14px rgba(255,0,128,.35); flex-shrink:0;
+  letter-spacing:.02em;
+}
+.agr-badge-wait {
+  background:var(--bg3); color:var(--text-dim);
+  font-size:11px; font-weight:700; border-radius:12px;
+  padding:10px 14px; font-family:'Baloo 2',sans-serif;
+  border:1.5px solid var(--border); flex-shrink:0;
+  box-shadow:none;
 }
 
 /* Opponent picker */
@@ -1864,55 +1876,80 @@ body.compact-mode .gang-rank-list { gap:0; }
 .opp-btn .opp-name { font-size:11px; font-weight:700; color:var(--text); }
 
 /* TTT board */
+@keyframes cellPop { 0%{transform:scale(0) rotate(-10deg)} 70%{transform:scale(1.15) rotate(3deg)} 100%{transform:scale(1) rotate(0)} }
+@keyframes turnPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+@keyframes winGlow { 0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,.6)} 50%{box-shadow:0 0 0 8px rgba(168,85,247,0)} }
+
 .ttt-modal {
   position:fixed; inset:0; z-index:9400;
-  background:rgba(0,0,0,.75); backdrop-filter:blur(4px);
+  background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
   display:flex; align-items:flex-end; justify-content:center;
   opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
   pointer-events:none;
 }
 .ttt-modal.open { opacity:1; visibility:visible; pointer-events:all; }
 .ttt-sheet {
-  background:var(--bg2); border-radius:28px 28px 0 0;
-  padding:24px 24px 48px; width:100%; max-width:480px;
+  background:linear-gradient(180deg,#1a0533 0%,#0e0221 100%);
+  border-radius:28px 28px 0 0;
+  border-top:1.5px solid rgba(168,85,247,.3);
+  padding:20px 20px 48px; width:100%; max-width:480px;
   transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+  position:relative; overflow:hidden;
+}
+.ttt-sheet::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:22px 22px;
 }
 .ttt-modal.open .ttt-sheet { transform:translateY(0); }
 .ttt-handle {
-  width:40px; height:4px; background:var(--border2);
-  border-radius:100px; margin:0 auto 18px;
+  width:40px; height:4px; background:rgba(168,85,247,.4);
+  border-radius:100px; margin:0 auto 16px;
 }
-.ttt-header { text-align:center; margin-bottom:16px; }
+.ttt-header { text-align:center; margin-bottom:18px; position:relative; z-index:1; }
 .ttt-vs {
-  font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:800;
-  color:var(--text);
+  font-family:'Baloo 2',sans-serif; font-size:20px; font-weight:800;
+  color:#fff; letter-spacing:-.01em;
 }
-.ttt-turn { font-size:13px; color:var(--text-dim); margin-top:4px; }
+.ttt-turn {
+  font-size:13px; color:var(--theme-flame1); margin-top:5px; font-weight:700;
+  animation:turnPulse 1.5s ease-in-out infinite;
+}
+.ttt-turn.waiting { color:var(--text-dim); animation:none; }
 .ttt-board {
   display:grid; grid-template-columns:repeat(3,1fr);
-  gap:8px; max-width:280px; margin:0 auto 20px;
+  gap:10px; max-width:300px; margin:0 auto 20px;
+  position:relative; z-index:1;
 }
 .ttt-cell {
-  aspect-ratio:1; background:var(--bg3); border:2px solid var(--border);
-  border-radius:14px; display:flex; align-items:center; justify-content:center;
-  font-size:32px; cursor:pointer; transition:all .15s;
-  -webkit-tap-highlight-color:transparent;
+  aspect-ratio:1;
+  background:rgba(255,255,255,.06); border:2px solid rgba(168,85,247,.25);
+  border-radius:16px; display:flex; align-items:center; justify-content:center;
+  font-size:36px; cursor:pointer; transition:all .15s;
+  -webkit-tap-highlight-color:transparent; min-height:80px;
 }
-.ttt-cell:active { transform:scale(.93); }
-.ttt-cell.taken { cursor:default; }
-.ttt-cell.win-cell { background:var(--blue-dim); border-color:var(--blue-dark); }
+.ttt-cell:not(.taken):active { transform:scale(.91); background:rgba(168,85,247,.2); }
+.ttt-cell.taken { cursor:default; animation:cellPop .35s cubic-bezier(.175,.885,.32,1.275) both; }
+.ttt-cell.win-cell {
+  background:rgba(168,85,247,.25); border-color:rgba(168,85,247,.8);
+  animation:winGlow 1s ease-in-out infinite;
+}
 .ttt-result {
   text-align:center; margin-bottom:16px;
-  font-family:'Baloo 2',sans-serif; font-size:20px; font-weight:800;
-  color:var(--text); display:none;
+  font-family:'Baloo 2',sans-serif; font-size:24px; font-weight:800;
+  color:#fff; display:none; position:relative; z-index:1;
+  text-shadow:0 2px 12px rgba(255,0,128,.4);
 }
 .ttt-result.show { display:block; }
 .ttt-close-btn {
-  width:100%; padding:14px; border:none; border-radius:14px; cursor:pointer;
+  width:100%; padding:14px; border:none; border-radius:16px; cursor:pointer;
   font-family:'Baloo 2',sans-serif; font-size:15px; font-weight:800;
-  background:var(--bg3); color:var(--text); border:1.5px solid var(--border);
-  -webkit-tap-highlight-color:transparent;
+  background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
+  color:#fff; box-shadow:0 4px 18px rgba(0,0,0,.3);
+  -webkit-tap-highlight-color:transparent; position:relative; z-index:1;
+  transition:all .18s;
 }
+.ttt-close-btn:active { transform:scale(.97); }
 
 /* ════════════════
    FORFEIT WHEEL MODAL
@@ -5638,10 +5675,10 @@ async function renderActiveGames() {
       return `<div class="active-game-row" onclick="openGame('${g.id}')">
         <div class="agr-icon">⭕</div>
         <div class="agr-info">
-          <div class="agr-name">vs ${opp?.avatar} ${opp?.name}</div>
+          <div class="agr-name">${currentUser.avatar} ${currentUser.name} <span class="agr-vs">vs</span> ${opp?.avatar} ${opp?.name}</div>
           <div class="agr-status">${status}</div>
         </div>
-        ${(myTurn || isPending) ? '<div class="agr-badge">GO</div>' : ''}
+        ${(myTurn || isPending) ? '<div class="agr-badge">GO 👉</div>' : '<div class="agr-badge agr-badge-wait">Waiting</div>'}
       </div>`;
     }).join('');
 
@@ -5706,6 +5743,7 @@ function openTTT(opp, g) {
   } else {
     resultEl.classList.remove('show');
     turnEl.textContent = currentGame.myTurn ? "Your turn 👉" : `Waiting for ${opp.name}…`;
+  turnEl.className = currentGame.myTurn ? 'ttt-turn' : 'ttt-turn waiting';
   }
 
   renderTTTBoard();
@@ -5728,7 +5766,7 @@ function renderTTTBoard() {
   }
 
   board.innerHTML = currentGame.board.map((cell, i) => {
-    const canClick = currentGame.myTurn && cell === '' && currentGame.status === 'active';
+    const canClick = currentGame.myTurn && cell === '' && (currentGame.status === 'active' || currentGame.status === 'pending');
     return `<div class="ttt-cell${cell ? ' taken' : ''}" ${canClick ? `onclick="makeMove(${i})"` : ''}>
       ${cell ? symbols[cell] : ''}
     </div>`;
@@ -5825,7 +5863,8 @@ function pollForMove() {
           resultEl.classList.add('show');
           document.getElementById('tttTurn').textContent = '';
         } else {
-          document.getElementById('tttTurn').textContent = "Your turn 👉";
+          const tu = document.getElementById('tttTurn');
+          if(tu) { tu.textContent = "Your turn 👉"; tu.className = "ttt-turn"; }
         }
         renderTTTBoard();
       }
