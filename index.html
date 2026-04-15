@@ -1707,6 +1707,7 @@ body.compact-mode .gang-rank-list { gap:0; }
 @keyframes glowPulse  { 0%,100%{opacity:.6} 50%{opacity:1} }
 @keyframes slideInUp  { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
 @keyframes badgePop   { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+@keyframes agrPulse    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
 @keyframes scanline   { 0%{background-position:0 0} 100%{background-position:0 100%} }
 
 /* Hero banner */
@@ -1848,7 +1849,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
   color:#fff; font-size:13px; font-weight:800; border-radius:12px;
   padding:10px 18px; font-family:'Baloo 2',sans-serif;
-  animation:badgePop .4s cubic-bezier(.175,.885,.32,1.275) both;
+  animation:agrPulse 1.4s ease-in-out infinite;
   box-shadow:0 3px 14px rgba(255,0,128,.35); flex-shrink:0;
   letter-spacing:.02em;
 }
@@ -1876,6 +1877,26 @@ body.compact-mode .gang-rank-list { gap:0; }
 .opp-btn .opp-name { font-size:11px; font-weight:700; color:var(--text); }
 
 /* TTT board */
+
+@keyframes outcomePop { 0%{transform:scale(0) rotate(-5deg);opacity:0} 70%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes confettiFall { 0%{transform:translateY(-20px);opacity:1} 100%{transform:translateY(40px);opacity:0} }
+
+.ttt-outcome {
+  text-align:center; padding:8px 0 4px; position:relative; z-index:1;
+}
+.ttt-outcome-emoji {
+  font-size:64px; display:block; margin-bottom:8px;
+  animation:outcomePop .5s cubic-bezier(.175,.885,.32,1.275) both;
+  filter:drop-shadow(0 4px 20px rgba(255,255,255,.3));
+}
+.ttt-outcome-title {
+  font-family:'Baloo 2',sans-serif; font-size:28px; font-weight:800;
+  color:#fff; margin-bottom:4px; line-height:1.1;
+}
+.ttt-outcome-sub {
+  font-size:13px; color:rgba(255,255,255,.6); margin-bottom:4px;
+}
+
 @keyframes cellPop { 0%{transform:scale(0) rotate(-10deg)} 70%{transform:scale(1.15) rotate(3deg)} 100%{transform:scale(1) rotate(0)} }
 @keyframes turnPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 @keyframes winGlow { 0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,.6)} 50%{box-shadow:0 0 0 8px rgba(168,85,247,0)} }
@@ -2815,7 +2836,7 @@ syncHtmlBg('loading');
 <!-- ════ OPPONENT PICKER SHEET ════ -->
 <div class="bottom-sheet" id="oppSheet" style="max-height:70vh;overflow-y:auto">
   <div class="sheet-handle"></div>
-  <div class="sheet-title" id="oppSheetTitle">Choose opponent</div>
+  <div class="sheet-title" id="oppSheetTitle" style="font-size:22px;font-weight:800;text-align:center;margin-bottom:0">Choose opponent</div>
   <div class="opp-grid" id="oppGrid"></div>
 </div>
 
@@ -2829,6 +2850,11 @@ syncHtmlBg('loading');
     </div>
     <div class="ttt-board" id="tttBoard"></div>
     <div class="ttt-result" id="tttResult"></div>
+    <div class="ttt-outcome" id="tttOutcome" style="display:none">
+      <div class="ttt-outcome-emoji" id="tttOutcomeEmoji"></div>
+      <div class="ttt-outcome-title" id="tttOutcomeTitle"></div>
+      <div class="ttt-outcome-sub" id="tttOutcomeSub"></div>
+    </div>
     <button class="ttt-close-btn" id="tttCloseBtn" onclick="closeTTT()">Close</button>
   </div>
 </div>
@@ -4035,6 +4061,13 @@ async function registerPush(memberId) {
 // Register service worker on load
 if('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(e => console.warn('SW:', e));
+  // Listen for messages from SW (e.g. open games tab from notification click)
+  navigator.serviceWorker.addEventListener('message', e => {
+    if(e.data?.type === 'OPEN_TAB' && e.data.tab === 'games') {
+      switchTab('games', null);
+      setMobNav('games');
+    }
+  });
 }
 
 function login(memberId) {
@@ -4088,7 +4121,8 @@ async function enableNotifsFromSettings() {
     await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
     if(permission !== 'granted') {
-      if(status) status.textContent = 'Permission denied — enable in iPhone Settings';
+      const isIOS = /iphone|ipad/i.test(navigator.userAgent);
+      if(status) status.textContent = isIOS ? 'Permission denied — enable in iPhone Settings' : 'Permission denied — enable in Android Settings → Apps → Chrome → Notifications';
       return;
     }
     const subscription = await reg.pushManager.subscribe({
@@ -4122,7 +4156,8 @@ function updateNotifStatus() {
     status.textContent = '✓ Notifications enabled';
     if(arrow) arrow.textContent = '✓';
   } else if(Notification.permission === 'denied') {
-    status.textContent = 'Blocked — enable in iPhone Settings → Gang Gang';
+    const isIOS2 = /iphone|ipad/i.test(navigator.userAgent);
+    status.textContent = isIOS2 ? 'Blocked — enable in iPhone Settings → Gang Gang' : 'Blocked — enable in Android Settings → Apps → Chrome → Notifications';
     if(arrow) arrow.textContent = '!';
   } else {
     status.textContent = 'Get nudged to log, low mood alerts & note alerts';
@@ -4233,7 +4268,7 @@ function switchTab(tabId, navEl) {
 
 // Mobile nav state
 function setMobNav(activeKey) {
-  const map={'dashboard':'mnb-dashboard','leaderboard':'mnb-leaderboard'};
+  const map={'dashboard':'mnb-dashboard','leaderboard':'mnb-leaderboard','games':'mnb-games'};
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
   const key=activeKey.startsWith('member-')?'mnb-me':map[activeKey];
   if(key) document.getElementById(key)?.classList.add('active');
@@ -5678,7 +5713,7 @@ async function renderActiveGames() {
           <div class="agr-name">${currentUser.avatar} ${currentUser.name} <span class="agr-vs">vs</span> ${opp?.avatar} ${opp?.name}</div>
           <div class="agr-status">${status}</div>
         </div>
-        ${(myTurn || isPending) ? '<div class="agr-badge">GO 👉</div>' : '<div class="agr-badge agr-badge-wait">Waiting</div>'}
+        ${(myTurn || isPending) ? '<div class="agr-badge">GO</div>' : '<div class="agr-badge agr-badge-wait">Waiting</div>'}
       </div>`;
     }).join('');
 
@@ -5746,6 +5781,10 @@ function openTTT(opp, g) {
   turnEl.className = currentGame.myTurn ? 'ttt-turn' : 'ttt-turn waiting';
   }
 
+  // Reset outcome panel
+  const outEl = document.getElementById('tttOutcome'); if(outEl) outEl.style.display='none';
+  const resEl = document.getElementById('tttResult'); if(resEl) resEl.classList.remove('show');
+  const cbtn = document.getElementById('tttCloseBtn'); if(cbtn) cbtn.textContent='Close';
   renderTTTBoard();
   modal.classList.add('open');
 
@@ -5797,9 +5836,10 @@ async function makeMove(idx) {
   document.getElementById('tttTurn').textContent = finished ? '' : `Waiting for opponent…`;
 
   if(finished) {
-    const resultEl = document.getElementById('tttResult');
-    resultEl.textContent = isDraw ? "It's a draw! 🤝" : "You won! 🎉";
-    resultEl.classList.add('show');
+    const resultEl2 = document.getElementById('tttResult');
+    resultEl2.classList.add('show');
+    const oppName3 = MEMBERS.find(m=>m.id===currentGame.oppId)?.name || 'Opponent';
+    showTTTOutcome(isDraw ? 'draw' : 'win', oppName3);
   }
 
   // Save to Supabase
@@ -5856,12 +5896,13 @@ function pollForMove() {
         const opp = MEMBERS.find(m => m.id === currentGame.oppId);
         if(g.status === 'finished') {
           clearInterval(tttPollTimer);
-          const resultEl = document.getElementById('tttResult');
+          const resultElP = document.getElementById('tttResult');
           const won = g.winner === currentUser.id;
           const draw = g.winner === 'draw';
-          resultEl.textContent = draw ? "It's a draw! 🤝" : won ? "You won! 🎉" : "You lost 💀";
-          resultEl.classList.add('show');
+          resultElP.classList.add('show');
           document.getElementById('tttTurn').textContent = '';
+          const oppNameP = MEMBERS.find(m=>m.id===currentGame.oppId)?.name || 'Opponent';
+          showTTTOutcome(draw ? 'draw' : won ? 'win' : 'lose', oppNameP);
         } else {
           const tu = document.getElementById('tttTurn');
           if(tu) { tu.textContent = "Your turn 👉"; tu.className = "ttt-turn"; }
@@ -5870,6 +5911,26 @@ function pollForMove() {
       }
     } catch(e) {}
   }, 3000);
+}
+
+
+function showTTTOutcome(type, oppName) {
+  const outcomes = {
+    win:  { emoji:'🏆', title:'You Won!', sub:`${oppName} didn't stand a chance` },
+    lose: { emoji:'💀', title:'You Lost', sub:`${oppName} got you this time...` },
+    draw: { emoji:'🤝', title:"It's a Draw!", sub:'Too evenly matched — rematch?' },
+  };
+  const o = outcomes[type];
+  const el = document.getElementById('tttOutcome');
+  document.getElementById('tttResult').style.display = 'none';
+  document.getElementById('tttOutcomeEmoji').textContent = o.emoji;
+  document.getElementById('tttOutcomeTitle').textContent = o.title;
+  document.getElementById('tttOutcomeSub').textContent = o.sub;
+  if(el) el.style.display = 'block';
+
+  // Update close button
+  const btn = document.getElementById('tttCloseBtn');
+  if(btn) btn.textContent = type === 'win' ? '🎉 Close' : type === 'draw' ? '🤝 Close' : '😤 Close';
 }
 
 function closeTTT() {
