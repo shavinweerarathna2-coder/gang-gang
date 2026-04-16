@@ -5228,93 +5228,66 @@ function renderAlltimeTable() {
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 // ── Vibe Check (dashboard) ────────────────────────────────────────
-function loadDashInsight() {
+async function loadDashInsight() {
   const btn  = document.getElementById('dashInsightBtn');
   const body = document.getElementById('dashInsightBody');
 
   const logged = MEMBERS.map(m => {
     const te = db.todayEntry(m.id);
-    return te ? { m, score: te.score, streak: calcStreak(db.getEntries(m.id)) } : null;
+    return te ? { m, score: te.score, vibe: te.vibe||'', note: te.note||'', streak: calcStreak(db.getEntries(m.id)) } : null;
   }).filter(Boolean);
 
   if(logged.length < 2) { showToast('Need at least 2 members logged'); return; }
 
   btn.disabled = true;
   body.className = 'insight-body dim';
+  body.textContent = 'Reading the room…';
 
-  const avg      = logged.reduce((s,r)=>s+r.score,0) / logged.length;
-  const top      = [...logged].sort((a,b)=>b.score-a.score)[0];
-  const low      = [...logged].sort((a,b)=>a.score-b.score)[0];
-  const topStr   = logged.sort((a,b)=>b.streak-a.streak)[0];
-  const notLogged= MEMBERS.filter(m=>!db.todayEntry(m.id));
-  const allSame  = logged.every(r=>r.score===logged[0].score);
-  const highVibe = avg >= 4;
-  const lowVibe  = avg <= 2.5;
-  const mixed    = !highVibe && !lowVibe;
+  const notLogged = MEMBERS.filter(m => !db.todayEntry(m.id));
+  const avg = (logged.reduce((s,r)=>s+r.score,0)/logged.length).toFixed(1);
 
-  let line1, line2, line3;
+  const dataStr = logged.map(r =>
+    `${r.m.name}: ${MOODS[r.score].label} (${r.score}/5)${r.vibe?' · vibe: '+r.vibe:''}${r.note?' · note: "'+r.note+'"':''} · streak: ${r.streak} days`
+  ).join('\n');
 
-  if(highVibe) {
-    line1 = pick([
-      `The gang is absolutely buzzing today — ${top.m.name} is leading the charge with a ${top.m.avatar} ${MOODS[top.score].label} energy.`,
-      `Good things are happening. ${top.m.name} is on a ${MOODS[top.score].label} wave and lifting the whole vibe.`,
-      `${top.m.name} walked in with ${MOODS[top.score].emoji} energy and honestly? It shows across the whole gang.`,
-    ]);
-  } else if(lowVibe) {
-    line1 = pick([
-      `Today's been a heavy one — the gang average is sitting at ${avg.toFixed(1)}/5, and that's okay. Hard days happen.`,
-      `The vibe is a little quieter than usual today. ${low.m.name} is carrying a ${MOODS[low.score].label} mood — someone drop them a message.`,
-      `Not every day is a 5. Today the gang is sitting at ${avg.toFixed(1)} and that's worth acknowledging.`,
-    ]);
-  } else {
-    line1 = pick([
-      `Mixed bag today — ${top.m.name} is feeling ${MOODS[top.score].label} ${top.m.avatar} while ${low.m.name} is having a tougher ${MOODS[low.score].label} kind of day.`,
-      `The gang's sitting at an average of ${avg.toFixed(1)} today. ${top.m.name} is the high note, ${low.m.name} the quiet one to check on.`,
-      `${logged.length} members checked in — moods range from ${MOODS[low.score].label} to ${MOODS[top.score].label}. Solid range for a real friend group.`,
-    ]);
-  }
+  const prompt = `You are reading the mood of a close friend group called "the gang". Today's data:\n${dataStr}\n${notLogged.length?'Not yet logged: '+notLogged.map(m=>m.name).join(', '):'Everyone logged today!'}\n\nGroup average: ${avg}/5.\n\nWrite a short, warm, honest 2-3 sentence vibe check. Be observant and specific — reference actual names, scores and vibes. Don't be generic. End with one line that speaks to the whole group.`;
 
-  if(topStr.streak >= 5) {
-    line2 = pick([
-      `${topStr.m.name} is on a ${topStr.streak}-day streak 🔥 — that kind of consistency is genuinely inspiring.`,
-      `Big up ${topStr.m.name} for ${topStr.streak} days straight 🔥 — that's not luck, that's commitment.`,
-      `${topStr.m.name} hasn't missed a day in ${topStr.streak} days. The bar has been set.`,
-    ]);
-  } else if(notLogged.length > 0) {
-    const names = notLogged.map(m=>m.name).join(' & ');
-    line2 = pick([
-      `Still waiting on ${names} to check in — give them a nudge 👀`,
-      `${names} hasn't logged yet today — someone ping them!`,
-      `The gang is ${logged.length}/${MEMBERS.length} today. ${names}, the crew needs your vibe!`,
-    ]);
-  } else {
-    line2 = pick([
-      `Everyone's checked in today 🎉 That's a full house — rare and beautiful.`,
-      `All ${MEMBERS.length} members logged today. The gang showed up completely.`,
-      `Full squad checked in. That's the energy.`,
-    ]);
-  }
-
-  if(allSame) {
-    line3 = `Everyone's on the exact same wavelength today — ${MOODS[logged[0].score].emoji} across the board.`;
-  } else if(highVibe) {
-    line3 = pick(["Keep this energy going 🔥","What a day to be in this gang.","Bottle this vibe — it's a good one."]);
-  } else if(lowVibe) {
-    line3 = pick(["Check in on each other today. That's what the gang is for.","Tough days are easier together. You've got each other.","Show up for the low days too — that's what really counts."]);
-  } else {
-    line3 = pick(['Every check-in matters. Keep going.','The gang shows up. That\'s everything.','Real ones log even on the average days.']);
-  }
-
-  setTimeout(() => {
+  if(!db.url || !db.key) {
+    // Fallback to template if no Supabase
     body.className = 'insight-body';
-    body.textContent = `${line1} ${line2} ${line3}`;
-    btn.disabled = false;
-    btn.textContent = '↺ Re-read';
-  }, 600);
+    body.textContent = `Gang average today: ${avg}/5. ${logged.length}/${MEMBERS.length} members logged.`;
+    btn.disabled = false; btn.textContent = '↺ Re-read';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${db.url}/functions/v1/angie-bot`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+      body: JSON.stringify({
+        system: 'You are a warm, perceptive friend group analyst. Write naturally and specifically. Keep it to 2-3 sentences max.',
+        messages:[{ role:'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text;
+    body.className = 'insight-body';
+    body.textContent = reply || `Gang average: ${avg}/5 today.`;
+    btn.disabled = false; btn.textContent = '↺ Re-read';
+  } catch(e) {
+    body.className = 'insight-body';
+    body.textContent = `Gang average today: ${avg}/5. ${logged.length}/${MEMBERS.length} members logged.`;
+    btn.disabled = false; btn.textContent = '↺ Re-read';
+  }
+  return; // skip old template logic
+
+  // Template variables removed — Claude handles this now
+
+  // Legacy template fallback removed — handled above
 }
 
 // ── Gang Reflection (Insights page) ──────────────────────────────
-function loadGangInsight() {
+async function loadGangInsight() {
   const btn    = document.getElementById('gangInsightBtn');
   const body   = document.getElementById('gangInsightBody');
   const result = document.getElementById('gangInsightResult');
@@ -5334,6 +5307,35 @@ function loadGangInsight() {
   if(result) result.style.display='block';
   body.className='insight-body-lg dim';
   body.innerHTML='<span class="spinner"></span>';
+
+  // Build data summary for Claude
+  const gangDataStr = withData.map(d => {
+    const recent = d.entries.slice(0,7).map(e=>`${e.date}: ${MOODS[e.score].label}(${e.score})${e.vibe?' '+e.vibe:''}`).join(', ');
+    return `${d.m.name}: 7-day avg ${(d.avg||0).toFixed(1)}/5, streak ${d.streak} days. Recent: ${recent}`;
+  }).join('\n');
+
+  const gangPrompt = `You are analysing mood data for a close friend group called "the gang". Here is their data from the past 7 days:\n\n${gangDataStr}\n\nWrite a thoughtful 3-4 sentence gang mood report. Be specific — mention names, patterns, who's thriving, who might need a check-in. Warm but honest tone. End with one sentence for the whole group.`;
+
+  if(db.url && db.key) {
+    try {
+      const res = await fetch(`${db.url}/functions/v1/angie-bot`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+        body: JSON.stringify({
+          system: 'You are a warm, perceptive friend group analyst. Be specific and use the actual data. 3-4 sentences max.',
+          messages:[{ role:'user', content: gangPrompt }]
+        })
+      });
+      const data = await res.json();
+      const reply = data.content?.[0]?.text;
+      if(reply) {
+        body.className='insight-body-lg';
+        body.textContent = reply;
+        btn.disabled=false; btn.textContent='✨ Re-read the room';
+        return;
+      }
+    } catch(e) { /* fall through to template */ }
+  }
 
   const sorted     = [...withData].sort((a,b)=>(b.avg||0)-(a.avg||0));
   const topMember  = sorted[0];
@@ -5424,7 +5426,7 @@ function updateInsightMeta() {
 }
 
 // ── Personal Reflection (Insights page) ──────────────────────────
-function loadPersonalInsight() {
+async function loadPersonalInsight() {
   const memberId = document.getElementById('insightMemberSel').value;
   const member   = MEMBERS.find(m=>m.id===memberId);
   const entries  = db.getEntries(memberId).slice(0,14);
@@ -6405,12 +6407,13 @@ async function sendAngieBot() {
       ? `They logged their mood today as ${MOODS[todayMood.score].label} (${todayMood.score}/5).`
       : `They haven't logged their mood today yet.`;
     const systemWithContext = AB_SYSTEM_PROMPT + `\n\nYou are currently talking to ${memberAvatar} ${memberName}. ${moodContext}`;
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(`${db.url}/functions/v1/angie-bot`, {
       method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer ' + db.key
+      },
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:300,
         system: systemWithContext,
         messages: abHistory
       })
