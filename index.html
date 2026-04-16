@@ -6065,10 +6065,8 @@ function openTTT(opp, g) {
     turnEl.className = currentGame.myTurn ? 'ttt-turn' : 'ttt-turn waiting';
   }
 
-  // Poll for opponent move if not my turn
-  if(!currentGame.myTurn && g.status !== 'finished') {
-    pollForMove();
-  }
+  // Always poll while game is open
+  if(g.status !== 'finished') pollForMove();
 }
 
 function renderTTTBoard() {
@@ -6156,7 +6154,8 @@ let tttPollTimer = null;
 function pollForMove() {
   clearInterval(tttPollTimer);
   tttPollTimer = setInterval(async () => {
-    if(!currentGame || currentGame.myTurn) { clearInterval(tttPollTimer); return; }
+    if(!currentGame) { clearInterval(tttPollTimer); return; }
+    if(!document.getElementById('tttModal').classList.contains('open')) { clearInterval(tttPollTimer); return; }
     try {
       const res = await fetch(
         `${db.url}/rest/v1/game_sessions?id=eq.${currentGame.id}`,
@@ -6285,7 +6284,7 @@ async function renderGameKing() {
         <div class="gq-info">
           <div class="gq-label">Game Queen</div>
           <div class="gq-name">${king.avatar} ${king.name}</div>
-          <div class="gq-stats">${winCount} win${winCount!==1?'s':''} this month · ${totalGames} game${totalGames!==1?'s':''} finished by the gang</div>
+          <div class="gq-stats">${winCount} win${winCount!==1?'s':''} this month · ${totalGames} gang game${totalGames!==1?'s':''}</div>
         </div>
         <div class="gq-wins">${winCount}<span>wins</span></div>
       </div>
@@ -6326,7 +6325,7 @@ function openC4(opp, g) {
   renderC4Board();
   modal.classList.add('open');
 
-  if(!currentC4.myTurn && g.status !== 'finished') pollC4();
+  if(g.status !== 'finished') pollC4();
 }
 
 function renderC4Board() {
@@ -6336,27 +6335,14 @@ function renderC4Board() {
   const oppPiece = myPiece === 'x' ? 'o' : 'x';
   const canDrop  = currentC4.myTurn && (currentC4.status === 'active' || currentC4.status === 'pending');
 
-  // Build column-by-column drop buttons row at top + the 6x7 grid
-  let html = '';
-
-  // Drop arrow row — one button per column
-  html += '<div class="c4-drop-row">';
-  for(let col = 0; col < C4_COLS; col++) {
-    const colFull = !currentC4.board.some((cell, i) => i % C4_COLS === col && cell === '');
-    html += `<div class="c4-drop-btn${canDrop && !colFull ? ' active' : ''}"
-      ${canDrop && !colFull ? `onclick="dropC4(${col})"` : ''}>
-      ${canDrop && !colFull ? '▼' : ''}
-    </div>`;
-  }
-  html += '</div>';
-
-  // Grid cells — display only, no onclick
-  currentC4.board.forEach((cell, i) => {
+  // Cells — click any cell in column to drop to bottom
+  board.innerHTML = currentC4.board.map((cell, i) => {
+    const col = i % C4_COLS;
     const cls = cell ? (cell === currentC4.mySymbol ? myPiece : oppPiece) : '';
-    html += `<div class="c4-cell${cls ? ' taken ' + cls : ''}"></div>`;
-  });
-
-  board.innerHTML = html;
+    const colFull = !currentC4.board.some((c, j) => j % C4_COLS === col && c === '');
+    return `<div class="c4-cell${cls ? ' taken ' + cls : ''}"
+      ${canDrop && !colFull ? `onclick="dropC4(${col})"` : ''}></div>`;
+  }).join('');
 }
 
 function isLowestEmpty(board, col, idx) {
@@ -6433,7 +6419,8 @@ function checkC4Winner(board) {
 function pollC4() {
   clearInterval(c4PollTimer);
   c4PollTimer = setInterval(async () => {
-    if(!currentC4 || currentC4.myTurn) { clearInterval(c4PollTimer); return; }
+    if(!currentC4) { clearInterval(c4PollTimer); return; }
+    if(!document.getElementById('c4Modal').classList.contains('open')) { clearInterval(c4PollTimer); return; }
     try {
       const res = await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentC4.id}`, { headers: db._headers() });
       const [g] = await res.json();
@@ -6622,6 +6609,7 @@ function pollRPS(opp) {
   clearInterval(rpsPollTimer);
   rpsPollTimer = setInterval(async () => {
     if(!currentRPS) { clearInterval(rpsPollTimer); return; }
+    if(!document.getElementById('rpsModal').classList.contains('open')) { clearInterval(rpsPollTimer); return; }
     try {
       const res = await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentRPS.id}`, { headers: db._headers() });
       const [g] = await res.json();
