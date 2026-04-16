@@ -736,7 +736,7 @@ body {
 /* Vibe tag row */
 .vibe-label { font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-dim); font-weight:600; margin:10px 0 6px; }
 .vibe-scale {
-  display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px;
+  display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; justify-content:center;
 }
 .vibe-option {
   appearance:none; -webkit-appearance:none; font-family:'Nunito',sans-serif;
@@ -1775,6 +1775,20 @@ body.compact-mode .gang-rank-list { gap:0; }
 .game-card:nth-child(2) { animation-delay:.12s; }
 .game-card:nth-child(3) { animation-delay:.19s; }
 
+/* Connect 4 card — electric red */
+.game-card.c4-card {
+  background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 50%,#ef4444 100%);
+  box-shadow:0 6px 24px rgba(239,68,68,.4);
+  border:1px solid rgba(252,165,165,.25);
+}
+.game-card.c4-card:active { transform:scale(.96); box-shadow:0 2px 10px rgba(239,68,68,.3); }
+/* RPS card — electric green */
+.game-card.rps-card {
+  background:linear-gradient(135deg,#14532d 0%,#15803d 50%,#22c55e 100%);
+  box-shadow:0 6px 24px rgba(34,197,94,.4);
+  border:1px solid rgba(134,239,172,.25);
+}
+.game-card.rps-card:active { transform:scale(.96); box-shadow:0 2px 10px rgba(34,197,94,.3); }
 /* Noughts card — electric purple */
 .game-card.ttt-card {
   background:linear-gradient(135deg,#2e1065 0%,#4c1d95 50%,#7c3aed 100%);
@@ -1971,6 +1985,181 @@ body.compact-mode .gang-rank-list { gap:0; }
   transition:all .18s;
 }
 .ttt-close-btn:active { transform:scale(.97); }
+
+
+
+/* ════════════════
+   GAME KING CARD
+════════════════ */
+@keyframes crownFloat { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-6px) rotate(5deg)} }
+@keyframes kingShimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
+
+.game-king-card {
+  position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#1c0a00 0%,#2d1500 40%,#1c0a00 100%);
+  border-radius:18px; padding:16px 18px; margin-bottom:14px;
+  border:1.5px solid rgba(251,191,36,.25);
+  box-shadow:0 6px 24px rgba(251,191,36,.15);
+}
+.game-king-card::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:20px 20px;
+}
+.game-king-card::after {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  border-radius:18px;
+  border:1.5px solid transparent;
+  background:linear-gradient(#1c0a00,#2d1500) padding-box,
+    linear-gradient(90deg,#fbbf24,#f59e0b,#fde68a,#f59e0b,#fbbf24) border-box;
+  background-size:auto, 300% auto;
+  animation:kingShimmer 2.5s linear infinite;
+  background-position:auto, 0% center;
+}
+.gk-inner { position:relative; z-index:1; display:flex; align-items:center; gap:14px; }
+.gk-crown {
+  font-size:42px; flex-shrink:0;
+  animation:crownFloat 3s ease-in-out infinite;
+  filter:drop-shadow(0 4px 12px rgba(251,191,36,.5));
+}
+.gk-info { flex:1; min-width:0; }
+.gk-label {
+  font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:800;
+  color:rgba(251,191,36,.9); margin-bottom:4px; letter-spacing:.02em;
+  text-transform:none;
+}
+.gk-name {
+  font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800; line-height:1.1;
+  background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b,#fde68a);
+  background-size:200% auto; -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; animation:kingShimmer 3s linear infinite;
+}
+.gk-stats { font-size:12px; color:rgba(255,255,255,.55); margin-top:3px; }
+.gk-wins {
+  font-family:'Baloo 2',sans-serif; font-size:36px; font-weight:800;
+  color:#fbbf24; line-height:1; text-align:center; flex-shrink:0;
+  text-shadow:0 2px 12px rgba(251,191,36,.4);
+}
+.gk-wins span { font-size:12px; font-weight:600; color:rgba(251,191,36,.6); display:block; }
+.gk-empty {
+  position:relative; z-index:1; text-align:center;
+  font-size:13px; color:rgba(255,255,255,.4); padding:6px 0;
+}
+
+/* ════════════════
+   CONNECT 4
+════════════════ */
+.c4-modal {
+  position:fixed; inset:0; z-index:9400;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+  pointer-events:none;
+}
+.c4-modal.open { opacity:1; visibility:visible; pointer-events:all; }
+.c4-sheet {
+  background:linear-gradient(180deg,#1a0a0a 0%,#0e0221 100%);
+  border-radius:28px 28px 0 0;
+  border-top:1.5px solid rgba(239,68,68,.3);
+  padding:20px 16px 48px; width:100%; max-width:480px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+  position:relative; overflow:hidden;
+}
+.c4-sheet::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:22px 22px;
+}
+.c4-modal.open .c4-sheet { transform:translateY(0); }
+.c4-board {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  gap:5px; margin:0 auto 16px; max-width:340px;
+  background:rgba(30,58,138,.6); border-radius:14px;
+  padding:10px; position:relative; z-index:1;
+  border:2px solid rgba(59,130,246,.3);
+}
+.c4-cell {
+  aspect-ratio:1; border-radius:50%;
+  background:rgba(0,0,0,.5); border:2px solid rgba(255,255,255,.08);
+  cursor:pointer; transition:all .15s; display:flex;
+  align-items:center; justify-content:center; font-size:20px;
+  -webkit-tap-highlight-color:transparent; min-height:36px;
+}
+.c4-cell:not(.taken):hover { background:rgba(255,255,255,.1); }
+.c4-cell:not(.taken):active { transform:scale(.9); }
+.c4-cell.x { background:radial-gradient(circle,#ef4444,#b91c1c); border-color:rgba(252,165,165,.4); }
+.c4-cell.o { background:radial-gradient(circle,#facc15,#b45309); border-color:rgba(253,224,71,.4); }
+.c4-cell.win-cell { animation:winGlow 0.8s ease-in-out infinite; }
+
+/* ════════════════
+   ROCK PAPER SCISSORS
+════════════════ */
+.rps-modal {
+  position:fixed; inset:0; z-index:9400;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+  pointer-events:none;
+}
+.rps-modal.open { opacity:1; visibility:visible; pointer-events:all; }
+.rps-sheet {
+  background:linear-gradient(180deg,#052e16 0%,#0e0221 100%);
+  border-radius:28px 28px 0 0;
+  border-top:1.5px solid rgba(34,197,94,.3);
+  padding:20px 20px 48px; width:100%; max-width:480px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+  position:relative; overflow:hidden;
+}
+.rps-sheet::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:22px 22px;
+}
+.rps-modal.open .rps-sheet { transform:translateY(0); }
+.rps-rounds {
+  display:flex; justify-content:center; gap:10px; margin-bottom:16px;
+  position:relative; z-index:1;
+}
+.rps-round-dot {
+  width:28px; height:28px; border-radius:50%;
+  background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.15);
+  display:flex; align-items:center; justify-content:center; font-size:13px;
+}
+.rps-round-dot.win  { background:rgba(34,197,94,.3); border-color:rgba(34,197,94,.7); }
+.rps-round-dot.lose { background:rgba(239,68,68,.3); border-color:rgba(239,68,68,.7); }
+.rps-round-dot.draw { background:rgba(251,191,36,.3); border-color:rgba(251,191,36,.7); }
+.rps-pick-label {
+  text-align:center; font-size:13px; color:rgba(255,255,255,.6);
+  margin-bottom:14px; position:relative; z-index:1; font-weight:600;
+  letter-spacing:.05em;
+}
+.rps-choices {
+  display:flex; gap:10px; justify-content:center;
+  margin-bottom:16px; position:relative; z-index:1;
+}
+.rps-btn {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.15);
+  border-radius:16px; padding:16px 20px; cursor:pointer; flex:1;
+  font-size:32px; color:#fff; font-family:'Nunito',sans-serif;
+  font-size:11px; font-weight:700; transition:all .18s;
+  -webkit-tap-highlight-color:transparent;
+}
+.rps-btn span { font-size:11px; font-weight:700; color:rgba(255,255,255,.7); }
+.rps-btn:active { transform:scale(.93); background:rgba(34,197,94,.2); border-color:rgba(34,197,94,.6); }
+.rps-btn .rps-emoji { font-size:36px; }
+.rps-waiting {
+  text-align:center; padding:20px; font-size:14px; color:rgba(255,255,255,.5);
+  position:relative; z-index:1; animation:turnPulse 1.5s ease-in-out infinite;
+}
+.rps-reveal {
+  display:flex; align-items:center; justify-content:center;
+  gap:16px; margin-bottom:16px; position:relative; z-index:1;
+}
+.rps-reveal-side { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.rps-reveal-emoji { font-size:48px; animation:outcomePop .4s cubic-bezier(.175,.885,.32,1.275) both; }
+.rps-reveal-label { font-size:10px; color:rgba(255,255,255,.5); font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
+.rps-reveal-vs { font-size:16px; font-weight:800; color:rgba(255,255,255,.4); }
 
 /* ════════════════
    FORFEIT WHEEL MODAL
@@ -2815,7 +3004,7 @@ syncHtmlBg('loading');
   <div class="ls-inner">
     <div class="ls-logo">Gang Gang</div>
     <div class="ls-tagline">Mood Tracker</div>
-    <div class="ls-version">v4.0</div>
+    <div class="ls-version">v5.0</div>
     <div class="ls-avatars">
     <span class="ls-av" id="lsAv-vihara">👌</span>
     <span class="ls-av" id="lsAv-bigd">💪</span>
@@ -2838,6 +3027,50 @@ syncHtmlBg('loading');
   <div class="sheet-handle"></div>
   <div class="sheet-title" id="oppSheetTitle" style="font-size:22px;font-weight:800;text-align:center;margin-bottom:0">Choose opponent</div>
   <div class="opp-grid" id="oppGrid"></div>
+</div>
+
+
+<!-- ════ CONNECT 4 MODAL ════ -->
+<div class="c4-modal" id="c4Modal">
+  <div class="c4-sheet">
+    <div class="ttt-handle"></div>
+    <div class="ttt-header">
+      <div class="ttt-vs" id="c4Vs"></div>
+      <div class="ttt-turn" id="c4Turn"></div>
+    </div>
+    <div class="c4-board" id="c4Board"></div>
+    <div class="ttt-result" id="c4Result"></div>
+    <div class="ttt-outcome" id="c4Outcome" style="display:none">
+      <div class="ttt-outcome-emoji" id="c4OutcomeEmoji"></div>
+      <div class="ttt-outcome-title" id="c4OutcomeTitle"></div>
+      <div class="ttt-outcome-sub" id="c4OutcomeSub"></div>
+    </div>
+    <button class="ttt-close-btn" id="c4CloseBtn" onclick="closeC4()">Close</button>
+  </div>
+</div>
+
+<!-- ════ ROCK PAPER SCISSORS MODAL ════ -->
+<div class="rps-modal" id="rpsModal">
+  <div class="rps-sheet">
+    <div class="ttt-handle"></div>
+    <div class="ttt-header">
+      <div class="ttt-vs" id="rpsVs"></div>
+      <div class="ttt-turn" id="rpsTurn"></div>
+    </div>
+    <div class="rps-rounds" id="rpsRounds"></div>
+    <div class="rps-pick-label" id="rpsPickLabel">Choose your weapon</div>
+    <div class="rps-choices" id="rpsChoices">
+      <button class="rps-btn" onclick="makeRPSMove('rock')">🪨<span>Rock</span></button>
+      <button class="rps-btn" onclick="makeRPSMove('paper')">📄<span>Paper</span></button>
+      <button class="rps-btn" onclick="makeRPSMove('scissors')">✂️<span>Scissors</span></button>
+    </div>
+    <div class="ttt-outcome" id="rpsOutcome" style="display:none">
+      <div class="ttt-outcome-emoji" id="rpsOutcomeEmoji"></div>
+      <div class="ttt-outcome-title" id="rpsOutcomeTitle"></div>
+      <div class="ttt-outcome-sub" id="rpsOutcomeSub"></div>
+    </div>
+    <button class="ttt-close-btn" id="rpsCloseBtn" onclick="closeRPS()">Close</button>
+  </div>
 </div>
 
 <!-- ════ NOUGHTS & CROSSES MODAL ════ -->
@@ -3270,6 +3503,9 @@ syncHtmlBg('loading');
         </div>
       </div>
 
+      <!-- Game King -->
+      <div id="gameKingSlot"></div>
+
       <!-- Active games -->
       <div id="activeGamesSlot"></div>
 
@@ -3282,15 +3518,17 @@ syncHtmlBg('loading');
           <div class="game-card-desc">Classic 3×3 battle</div>
           <div class="game-card-play">Play now</div>
         </div>
-        <div class="game-card coming-soon">
+        <div class="game-card c4-card" onclick="startGameFlow('c4')">
           <div class="game-card-icon">🔴</div>
           <div class="game-card-name">Connect 4</div>
-          <div class="game-card-desc">Coming soon</div>
+          <div class="game-card-desc">Drop 4 in a row</div>
+          <div class="game-card-play">Play now</div>
         </div>
-        <div class="game-card coming-soon">
+        <div class="game-card rps-card" onclick="startGameFlow('rps')">
           <div class="game-card-icon">✊</div>
           <div class="game-card-name">Rock Paper Scissors</div>
-          <div class="game-card-desc">Coming soon</div>
+          <div class="game-card-desc">Best of 3 rounds</div>
+          <div class="game-card-play">Play now</div>
         </div>
         <div class="game-card coming-soon">
           <div class="game-card-icon">🎲</div>
@@ -3317,16 +3555,7 @@ syncHtmlBg('loading');
           <div class="game-card-name">Coming Soon</div>
           <div class="game-card-desc">Lightning fast</div>
         </div>
-        <div class="game-card coming-soon">
-          <div class="game-card-icon">🏆</div>
-          <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">For the glory</div>
-        </div>
-        <div class="game-card coming-soon">
-          <div class="game-card-icon">🎪</div>
-          <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">Expect the unexpected</div>
-        </div>
+
       </div>
     </div>
 
@@ -3443,16 +3672,16 @@ syncHtmlBg('loading');
   <div class="wn-backdrop" onclick="closeWhatsNew()"></div>
   <div class="wn-sheet">
     <div class="wn-hero">
-      <div class="wn-version">✦ Version 4.0</div>
-      <div class="wn-title">Gang Gang 4.0<br>is here 🚀</div>
+      <div class="wn-version">✦ Version 5.0</div>
+      <div class="wn-title">Gang Gang 5.0<br>is here 🚀</div>
       <div class="wn-subtitle">Big update — here's what's new</div>
     </div>
     <div class="wn-body">
       <div class="wn-feature">
-        <div class="wn-feat-icon">🔥</div>
+        <div class="wn-feat-icon">🎮</div>
         <div class="wn-feat-text">
-          <div class="wn-feat-title">Gang Streak</div>
-          <div class="wn-feat-desc">A new card on the dashboard tracks how many days in a row everyone has logged. Keep the gang streak alive — don't be the one to break it.</div>
+          <div class="wn-feat-title">Gang Games</div>
+          <div class="wn-feat-desc">Challenge anyone in the gang to Noughts &amp; Crosses, Connect 4, or Rock Paper Scissors. Find it in the new Games tab.</div>
         </div>
       </div>
       <div class="wn-feature">
@@ -3463,10 +3692,10 @@ syncHtmlBg('loading');
         </div>
       </div>
       <div class="wn-feature">
-        <div class="wn-feat-icon">🤫</div>
+        <div class="wn-feat-icon">🎰</div>
         <div class="wn-feat-text">
-          <div class="wn-feat-title">A Secret Has Been Added</div>
-          <div class="wn-feat-desc">Something sneaky has been hidden in the app. You'll know it when you find it... or when it finds you.</div>
+          <div class="wn-feat-title">Streak Forfeits</div>
+          <div class="wn-feat-desc">Break your streak and face the consequences. Spin the wheel, accept your fate, and let the gang watch.</div>
         </div>
       </div>
       <div class="wn-feature">
@@ -4097,7 +4326,7 @@ function login(memberId) {
   refreshAll();
   setTimeout(checkStreakBroken, 800); // check after data loads
   // Show what's new if this version hasn't been seen by this user
-  const wnKey = `gang_wn_4.0_${currentUser.id}`;
+  const wnKey = `gang_wn_5.0_${currentUser.id}`;
   if(!localStorage.getItem(wnKey)) {
     setTimeout(() => showWhatsNew(), 600);
   }
@@ -4214,7 +4443,7 @@ function closeWhatsNew() {
   const modal = document.getElementById('whatsNewModal');
   modal.classList.remove('open');
   // Mark as seen for this user and version
-  const wnKey = `gang_wn_4.0_${currentUser?.id}`;
+  const wnKey = `gang_wn_5.0_${currentUser?.id}`;
   if(wnKey) localStorage.setItem(wnKey, '1');
 }
 
@@ -4262,6 +4491,7 @@ function switchTab(tabId, navEl) {
   document.getElementById('mobTopbarTitle').textContent=title;
   const mId=tabId.startsWith('member-')?tabId.replace('member-',''):null;
   if(mId) renderMemberPage(MEMBERS.find(m=>m.id===mId));
+  if(tabId === 'games') { renderGameKing(); renderActiveGames(); }
   // scroll to top on mobile
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -4293,6 +4523,7 @@ function refreshAll() {
   renderCookedCard();
   renderForfeitCard();
   renderActiveGames();
+  renderGameKing();
   renderGroupStreak();
   const active=document.querySelector('.tab-pane.active');
   if(active&&active.id.startsWith('tab-member-')){
@@ -5656,7 +5887,7 @@ async function createGame(type, oppId) {
         type,
         player_x: currentUser.id,
         player_o: oppId,
-        board: JSON.stringify(['','','','','','','','','']),
+        board: type==='c4' ? JSON.stringify(Array(42).fill('')) : type==='rps' ? JSON.stringify({rounds:[],current:{x:null,o:null}}) : JSON.stringify(Array(9).fill('')),
         current_turn: currentUser.id,
         status: 'pending',
         winner: null,
@@ -5708,7 +5939,7 @@ async function renderActiveGames() {
       let status = myTurn ? "Your turn! 👉" : `${opp?.name}'s turn`;
       if(isPending) status = "Tap to accept challenge 🎮";
       return `<div class="active-game-row" onclick="openGame('${g.id}')">
-        <div class="agr-icon">⭕</div>
+        <div class="agr-icon">${g.type==='c4'?'🔴':g.type==='rps'?'✊':'⭕'}</div>
         <div class="agr-info">
           <div class="agr-name">${currentUser.avatar} ${currentUser.name} <span class="agr-vs">vs</span> ${opp?.avatar} ${opp?.name}</div>
           <div class="agr-status">${status}</div>
@@ -5745,18 +5976,25 @@ async function openGame(gameId) {
     const oppId = isX ? g.player_o : g.player_x;
     const opp   = MEMBERS.find(m => m.id === oppId);
 
-    currentGame = {
-      id: gameId,
-      type: g.type,
-      mySymbol: isX ? 'X' : 'O',
-      oppId,
+    const gameData = {
+      id: gameId, type: g.type,
+      mySymbol: isX ? 'X' : 'O', oppId,
       board: JSON.parse(g.board),
       myTurn: g.current_turn === currentUser.id,
-      status: g.status,
-      winner: g.winner
+      status: g.status, winner: g.winner
     };
 
-    openTTT(opp, g);
+    if(g.type === 'ttt') {
+      currentGame = gameData;
+      openTTT(opp, g);
+    } else if(g.type === 'c4') {
+      currentC4 = { ...gameData, board: Array.isArray(gameData.board) ? gameData.board : Array(42).fill('') };
+      openC4(opp, g);
+    } else if(g.type === 'rps') {
+      const rpsState = typeof g.board === 'object' ? g.board : JSON.parse(g.board);
+      currentRPS = { ...gameData, state: rpsState };
+      openRPS(opp, g);
+    }
   } catch(e) { showToast('Error loading game'); }
 }
 
@@ -5938,6 +6176,412 @@ function closeTTT() {
   document.getElementById('tttModal').classList.remove('open');
   currentGame = null;
   renderActiveGames();
+}
+
+
+
+// ══════════════════════════════════════════════
+//  GAME KING
+// ══════════════════════════════════════════════
+async function renderGameKing() {
+  const slot = document.getElementById('gameKingSlot');
+  if(!slot) return;
+
+  // Show empty state immediately while loading
+  slot.innerHTML = `<div class="game-king-card">
+    <div class="gk-inner">
+      <div class="gk-crown">👑</div>
+      <div class="gk-info">
+        <div class="gk-label">Game King</div>
+        <div class="gk-empty">No games finished yet — be the first to win!</div>
+      </div>
+    </div>
+  </div>`;
+
+  if(!db.url || !db.key) return;
+
+  try {
+    const res = await fetch(
+      `${db.url}/rest/v1/game_sessions?status=eq.finished&select=winner`,
+      { headers: db._headers() }
+    );
+    if(!res.ok) { slot.innerHTML=''; return; }
+    const rows = await res.json();
+
+    // Count wins per member (exclude draws)
+    const wins = {};
+    rows.forEach(r => {
+      if(r.winner && r.winner !== 'draw') {
+        wins[r.winner] = (wins[r.winner] || 0) + 1;
+      }
+    });
+
+    if(!Object.keys(wins).length) {
+      slot.innerHTML = `<div class="game-king-card">
+        <div class="gk-inner">
+          <div class="gk-crown">👑</div>
+          <div class="gk-info">
+            <div class="gk-label">Game King</div>
+            <div class="gk-empty">No games finished yet — be the first to win!</div>
+          </div>
+        </div>
+      </div>`;
+      return;
+    }
+
+    const topId = Object.keys(wins).sort((a,b) => wins[b]-wins[a])[0];
+    const king  = MEMBERS.find(m => m.id === topId);
+    if(!king) return;
+
+    const totalGames = rows.length;
+    const winCount   = wins[topId];
+    const losses     = Object.values(wins).reduce((a,b) => a+b, 0);
+
+    slot.innerHTML = `<div class="game-king-card">
+      <div class="gk-inner">
+        <div class="gk-crown">👑</div>
+        <div class="gk-info">
+          <div class="gk-label">Game King</div>
+          <div class="gk-name">${king.avatar} ${king.name}</div>
+          <div class="gk-stats">${winCount} win${winCount!==1?'s':''} from ${totalGames} game${totalGames!==1?'s':''} played</div>
+        </div>
+        <div class="gk-wins">${winCount}<span>wins</span></div>
+      </div>
+    </div>`;
+  } catch(e) { slot.innerHTML=''; }
+}
+
+// ══════════════════════════════════════════════
+//  CONNECT 4
+// ══════════════════════════════════════════════
+let currentC4 = null;
+let c4PollTimer = null;
+const C4_ROWS = 6, C4_COLS = 7;
+
+function openC4(opp, g) {
+  const modal = document.getElementById('c4Modal');
+  const vsEl  = document.getElementById('c4Vs');
+  const turnEl = document.getElementById('c4Turn');
+
+  vsEl.textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
+
+  const outEl = document.getElementById('c4Outcome');
+  const resEl = document.getElementById('c4Result');
+  if(outEl) outEl.style.display = 'none';
+  if(resEl) resEl.classList.remove('show');
+  document.getElementById('c4CloseBtn').textContent = 'Close';
+
+  if(g.status === 'finished') {
+    const won = g.winner === currentUser.id, draw = g.winner === 'draw';
+    turnEl.textContent = '';
+    showOutcome('c4', draw ? 'draw' : won ? 'win' : 'lose', opp.name);
+  } else {
+    resEl && resEl.classList.remove('show');
+    turnEl.textContent = currentC4.myTurn ? 'Your turn 👉' : `Waiting for ${opp.name}…`;
+    turnEl.className = currentC4.myTurn ? 'ttt-turn' : 'ttt-turn waiting';
+  }
+
+  renderC4Board();
+  modal.classList.add('open');
+
+  if(!currentC4.myTurn && g.status !== 'finished') pollC4();
+}
+
+function renderC4Board() {
+  const board = document.getElementById('c4Board');
+  if(!board || !currentC4) return;
+  const myPiece  = currentC4.mySymbol === 'X' ? 'x' : 'o';
+  const oppPiece = myPiece === 'x' ? 'o' : 'x';
+  const canDrop  = currentC4.myTurn && (currentC4.status === 'active' || currentC4.status === 'pending');
+
+  board.innerHTML = currentC4.board.map((cell, i) => {
+    const col = i % C4_COLS;
+    const cls = cell ? (cell === currentC4.mySymbol ? myPiece : oppPiece) : '';
+    return `<div class="c4-cell${cls ? ' taken ' + cls : ''}"
+      ${canDrop && !cell && isLowestEmpty(currentC4.board, col, i) ? `onclick="dropC4(${col})"` : ''}></div>`;
+  }).join('');
+}
+
+function isLowestEmpty(board, col, idx) {
+  // Check if this cell is the lowest empty in its column
+  const row = Math.floor(idx / C4_COLS);
+  for(let r = row + 1; r < C4_ROWS; r++) {
+    if(!board[r * C4_COLS + col]) return false;
+  }
+  return !board[idx];
+}
+
+async function dropC4(col) {
+  if(!currentC4 || !currentC4.myTurn) return;
+  // Find lowest empty row in column
+  let targetRow = -1;
+  for(let r = C4_ROWS - 1; r >= 0; r--) {
+    if(!currentC4.board[r * C4_COLS + col]) { targetRow = r; break; }
+  }
+  if(targetRow === -1) return; // column full
+
+  const board = [...currentC4.board];
+  board[targetRow * C4_COLS + col] = currentC4.mySymbol;
+  currentC4.board = board;
+  currentC4.myTurn = false;
+
+  const winner = checkC4Winner(board);
+  const isDraw = !winner && board.every(c => c !== '');
+  const finished = winner || isDraw;
+
+  document.getElementById('c4Turn').textContent = finished ? '' : 'Waiting for opponent…';
+  document.getElementById('c4Turn').className = 'ttt-turn waiting';
+  renderC4Board();
+
+  if(finished) {
+    showOutcome('c4', isDraw ? 'draw' : 'win', MEMBERS.find(m=>m.id===currentC4.oppId)?.name || 'Opponent');
+  }
+
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentC4.id}`, {
+      method:'PATCH', headers: db._headers(),
+      body: JSON.stringify({
+        board: JSON.stringify(board),
+        current_turn: currentC4.oppId,
+        ...(finished ? { status:'finished', winner: isDraw ? 'draw' : currentUser.id } : {})
+      })
+    });
+    if(!finished) {
+      fetch(`${db.url}/functions/v1/notify-game`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+        body: JSON.stringify({
+          from_name: currentUser.name, from_avatar: currentUser.avatar,
+          to_id: currentC4.oppId, game_id: currentC4.id, game_type:'c4', is_turn:true
+        })
+      }).catch(()=>{});
+    }
+  } catch(e) { console.warn('C4 move save failed:', e); }
+}
+
+function checkC4Winner(board) {
+  const get = (r,c) => (r>=0&&r<C4_ROWS&&c>=0&&c<C4_COLS) ? board[r*C4_COLS+c] : null;
+  for(let r=0;r<C4_ROWS;r++) {
+    for(let c=0;c<C4_COLS;c++) {
+      const cell = get(r,c); if(!cell) continue;
+      const dirs = [[0,1],[1,0],[1,1],[1,-1]];
+      for(const [dr,dc] of dirs) {
+        if([1,2,3].every(k => get(r+dr*k, c+dc*k)===cell)) return cell;
+      }
+    }
+  }
+  return null;
+}
+
+function pollC4() {
+  clearInterval(c4PollTimer);
+  c4PollTimer = setInterval(async () => {
+    if(!currentC4 || currentC4.myTurn) { clearInterval(c4PollTimer); return; }
+    try {
+      const res = await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentC4.id}`, { headers: db._headers() });
+      const [g] = await res.json();
+      if(!g) return;
+      const newBoard = JSON.parse(g.board);
+      if(JSON.stringify(newBoard) !== JSON.stringify(currentC4.board)) {
+        currentC4.board = newBoard;
+        currentC4.myTurn = g.current_turn === currentUser.id;
+        currentC4.status = g.status;
+        const opp = MEMBERS.find(m=>m.id===currentC4.oppId);
+        if(g.status === 'finished') {
+          clearInterval(c4PollTimer);
+          const won = g.winner === currentUser.id, draw = g.winner === 'draw';
+          document.getElementById('c4Turn').textContent = '';
+          showOutcome('c4', draw?'draw':won?'win':'lose', opp?.name||'Opponent');
+        } else {
+          document.getElementById('c4Turn').textContent = 'Your turn 👉';
+          document.getElementById('c4Turn').className = 'ttt-turn';
+        }
+        renderC4Board();
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+function closeC4() {
+  clearInterval(c4PollTimer);
+  document.getElementById('c4Modal').classList.remove('open');
+  currentC4 = null;
+  renderActiveGames();
+}
+
+// ══════════════════════════════════════════════
+//  ROCK PAPER SCISSORS
+// ══════════════════════════════════════════════
+let currentRPS = null;
+let rpsPollTimer = null;
+const RPS_WINS = { rock:'scissors', paper:'rock', scissors:'paper' };
+const RPS_EMOJI = { rock:'🪨', paper:'📄', scissors:'✂️' };
+
+function openRPS(opp, g) {
+  const modal = document.getElementById('rpsModal');
+  document.getElementById('rpsVs').textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
+
+  const outEl = document.getElementById('rpsOutcome');
+  if(outEl) outEl.style.display = 'none';
+  document.getElementById('rpsCloseBtn').textContent = 'Close';
+
+  renderRPSState(opp, g);
+  modal.classList.add('open');
+
+  if(g.status !== 'finished') pollRPS(opp);
+}
+
+function renderRPSState(opp, g) {
+  const state = typeof g.board === 'string' ? JSON.parse(g.board) : g.board;
+  const rounds = state.rounds || [];
+  const current = state.current || { x: null, o: null };
+  const isX = currentRPS.mySymbol === 'X';
+  const myKey = isX ? 'x' : 'o';
+  const oppKey = isX ? 'o' : 'x';
+
+  // Round dots
+  const dotsEl = document.getElementById('rpsRounds');
+  if(dotsEl) {
+    dotsEl.innerHTML = [0,1,2].map(i => {
+      const r = rounds[i];
+      if(!r) return `<div class="rps-round-dot">${i+1}</div>`;
+      const myChoice = isX ? r.x : r.o;
+      const oppChoice = isX ? r.o : r.x;
+      const won = RPS_WINS[myChoice] === oppChoice;
+      const drew = myChoice === oppChoice;
+      return `<div class="rps-round-dot ${drew?'draw':won?'win':'lose'}">${drew?'🤝':won?'✓':'✗'}</div>`;
+    }).join('');
+  }
+
+  const myScore  = rounds.filter(r=>{ const mc=isX?r.x:r.o, oc=isX?r.o:r.x; return RPS_WINS[mc]===oc; }).length;
+  const oppScore = rounds.filter(r=>{ const mc=isX?r.x:r.o, oc=isX?r.o:r.x; return RPS_WINS[oc]===mc; }).length;
+
+  const turnEl = document.getElementById('rpsTurn');
+  const labelEl = document.getElementById('rpsPickLabel');
+  const choicesEl = document.getElementById('rpsChoices');
+
+  // Check overall winner
+  if(myScore >= 2 || oppScore >= 2 || rounds.length >= 3) {
+    const totalDone = rounds.length >= 3 || myScore >= 2 || oppScore >= 2;
+    if(totalDone) {
+      if(turnEl) turnEl.textContent = '';
+      if(choicesEl) choicesEl.style.display = 'none';
+      if(labelEl) labelEl.style.display = 'none';
+      const won = myScore > oppScore, drew = myScore === oppScore;
+      showOutcome('rps', drew?'draw':won?'win':'lose', opp?.name||'Opponent');
+      return;
+    }
+  }
+
+  const iHavePicked = !!current[myKey];
+
+  if(iHavePicked) {
+    if(choicesEl) choicesEl.style.display = 'none';
+    if(labelEl) labelEl.textContent = `You picked ${RPS_EMOJI[current[myKey]]} — waiting for ${opp?.name}…`;
+    if(turnEl) { turnEl.textContent = ''; }
+  } else {
+    if(choicesEl) choicesEl.style.display = 'flex';
+    if(labelEl) labelEl.textContent = 'Choose your weapon';
+    if(turnEl) { turnEl.textContent = `Round ${rounds.length + 1} of 3`; turnEl.className = 'ttt-turn'; }
+  }
+}
+
+async function makeRPSMove(choice) {
+  if(!currentRPS) return;
+  const isX = currentRPS.mySymbol === 'X';
+  const myKey = isX ? 'x' : 'o';
+  const oppKey = isX ? 'o' : 'x';
+
+  const state = { ...currentRPS.state };
+  if(!state.current) state.current = { x: null, o: null };
+  if(state.current[myKey]) return; // already picked
+
+  state.current[myKey] = choice;
+
+  // Both picked — resolve round
+  if(state.current[myKey] && state.current[oppKey]) {
+    if(!state.rounds) state.rounds = [];
+    state.rounds.push({ ...state.current });
+    state.current = { x: null, o: null };
+  }
+
+  currentRPS.state = state;
+
+  // Check winner
+  const rounds = state.rounds || [];
+  const myScore  = rounds.filter(r=>{ const mc=isX?r.x:r.o,oc=isX?r.o:r.x; return RPS_WINS[mc]===oc; }).length;
+  const oppScore = rounds.filter(r=>{ const mc=isX?r.x:r.o,oc=isX?r.o:r.x; return RPS_WINS[oc]===mc; }).length;
+  const finished = myScore>=2 || oppScore>=2 || rounds.length>=3;
+
+  // Re-render
+  const opp = MEMBERS.find(m=>m.id===currentRPS.oppId);
+  renderRPSState(opp, { board: JSON.stringify(state), status: finished?'finished':'active' });
+
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentRPS.id}`, {
+      method:'PATCH', headers: db._headers(),
+      body: JSON.stringify({
+        board: JSON.stringify(state),
+        current_turn: currentRPS.oppId,
+        ...(finished ? { status:'finished', winner: myScore>oppScore?currentUser.id:oppScore>myScore?currentRPS.oppId:'draw' } : {})
+      })
+    });
+    if(!finished) {
+      fetch(`${db.url}/functions/v1/notify-game`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+        body: JSON.stringify({
+          from_name: currentUser.name, from_avatar: currentUser.avatar,
+          to_id: currentRPS.oppId, game_id: currentRPS.id, game_type:'rps', is_turn:true
+        })
+      }).catch(()=>{});
+    }
+  } catch(e) { console.warn('RPS save failed:', e); }
+}
+
+function pollRPS(opp) {
+  clearInterval(rpsPollTimer);
+  rpsPollTimer = setInterval(async () => {
+    if(!currentRPS) { clearInterval(rpsPollTimer); return; }
+    try {
+      const res = await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentRPS.id}`, { headers: db._headers() });
+      const [g] = await res.json();
+      if(!g) return;
+      const newState = JSON.stringify(JSON.parse(g.board));
+      const curState = JSON.stringify(currentRPS.state);
+      if(newState !== curState) {
+        currentRPS.state = JSON.parse(g.board);
+        currentRPS.status = g.status;
+        renderRPSState(opp, g);
+        if(g.status === 'finished') clearInterval(rpsPollTimer);
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+function closeRPS() {
+  clearInterval(rpsPollTimer);
+  document.getElementById('rpsModal').classList.remove('open');
+  currentRPS = null;
+  renderActiveGames();
+}
+
+// ── Shared outcome helper (works for all games) ──────────────────────
+function showOutcome(game, type, oppName) {
+  const outcomes = {
+    win:  { emoji:'🏆', title:'You Won!', sub:`${oppName} didn't stand a chance` },
+    lose: { emoji:'💀', title:'You Lost', sub:`${oppName} got you this time...` },
+    draw: { emoji:'🤝', title:"It's a Draw!", sub:'Too evenly matched — rematch?' },
+  };
+  const o = outcomes[type];
+  const outEl = document.getElementById(`${game}Outcome`);
+  if(!outEl) return;
+  outEl.querySelector(`[id$="OutcomeEmoji"]`).textContent = o.emoji;
+  outEl.querySelector(`[id$="OutcomeTitle"]`).textContent = o.title;
+  outEl.querySelector(`[id$="OutcomeSub"]`).textContent = o.sub;
+  outEl.style.display = 'block';
+  const btn = document.getElementById(`${game}CloseBtn`);
+  if(btn) btn.textContent = type==='win'?'🎉 Close':type==='draw'?'🤝 Close':'😤 Close';
 }
 
 // ══════════════════════════════════════════════
