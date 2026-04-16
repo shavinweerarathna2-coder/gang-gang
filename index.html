@@ -6419,7 +6419,8 @@ async function sendAngieBot() {
       })
     });
     const data = await res.json();
-    const reply = data.content?.[0]?.text || 'idk what to say. rare moment.';
+    console.log('Angie Bot response:', JSON.stringify(data));
+    const reply = data.content?.[0]?.text || data.error?.message || 'idk what to say. rare moment.';
     typingEl?.remove();
     if(statusEl) statusEl.innerHTML = '<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · chat with me';
     abHistory.push({ role:'assistant', content: reply });
@@ -6428,7 +6429,8 @@ async function sendAngieBot() {
   } catch(e) {
     typingEl?.remove();
     if(statusEl) statusEl.innerHTML = '<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · chat with me';
-    abAddMessage('something broke. typical. try again.', false);
+    abAddMessage(`error: ${e.message}`, false);
+    console.error('Angie Bot error:', e);
   }
 }
 
