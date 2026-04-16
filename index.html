@@ -2079,7 +2079,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   border:2px solid rgba(59,130,246,.3);
 }
 .c4-drop-row {
-  grid-column: 1 / -1;
+  grid-column: 1 / span 7;
   display:grid; grid-template-columns:repeat(7,1fr); gap:5px;
   margin-bottom:4px;
 }
@@ -6048,25 +6048,22 @@ function openTTT(opp, g) {
 
   vsEl.textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
 
-  if(g.status === 'finished') {
-    const won = g.winner === currentUser.id;
-    const draw = g.winner === 'draw';
-    resultEl.textContent = draw ? "It's a draw! 🤝" : won ? "You won! 🎉" : "You lost 💀";
-    resultEl.classList.add('show');
-    turnEl.textContent = '';
-    document.getElementById('tttCloseBtn').textContent = 'Close';
-  } else {
-    resultEl.classList.remove('show');
-    turnEl.textContent = currentGame.myTurn ? "Your turn 👉" : `Waiting for ${opp.name}…`;
-  turnEl.className = currentGame.myTurn ? 'ttt-turn' : 'ttt-turn waiting';
-  }
-
-  // Reset outcome panel
+  // Reset first, then apply state
   const outEl = document.getElementById('tttOutcome'); if(outEl) outEl.style.display='none';
-  const resEl = document.getElementById('tttResult'); if(resEl) resEl.classList.remove('show');
-  const cbtn = document.getElementById('tttCloseBtn'); if(cbtn) cbtn.textContent='Close';
-  renderTTTBoard();
+  resultEl.classList.remove('show');
+  if(cbtn) cbtn.textContent='Close';
+  renderTTTBoard(); // always show the final board state
   modal.classList.add('open');
+
+  if(g.status === 'finished') {
+    turnEl.textContent = '';
+    const won = g.winner === currentUser.id, draw = g.winner === 'draw';
+    const oppName2 = opp.name;
+    showTTTOutcome(draw ? 'draw' : won ? 'win' : 'lose', oppName2);
+  } else {
+    turnEl.textContent = currentGame.myTurn ? "Your turn 👉" : `Waiting for ${opp.name}…`;
+    turnEl.className = currentGame.myTurn ? 'ttt-turn' : 'ttt-turn waiting';
+  }
 
   // Poll for opponent move if not my turn
   if(!currentGame.myTurn && g.status !== 'finished') {
@@ -6179,8 +6176,8 @@ function pollForMove() {
           const resultElP = document.getElementById('tttResult');
           const won = g.winner === currentUser.id;
           const draw = g.winner === 'draw';
-          resultElP.classList.add('show');
           document.getElementById('tttTurn').textContent = '';
+          renderTTTBoard(); // show final board before outcome
           const oppNameP = MEMBERS.find(m=>m.id===currentGame.oppId)?.name || 'Opponent';
           showTTTOutcome(draw ? 'draw' : won ? 'win' : 'lose', oppNameP);
         } else {
@@ -6288,7 +6285,7 @@ async function renderGameKing() {
         <div class="gq-info">
           <div class="gq-label">Game Queen</div>
           <div class="gq-name">${king.avatar} ${king.name}</div>
-          <div class="gq-stats">${winCount} win${winCount!==1?'s':''} this month · ${totalGames} game${totalGames!==1?'s':''} played</div>
+          <div class="gq-stats">${winCount} win${winCount!==1?'s':''} this month · ${totalGames} game${totalGames!==1?'s':''} finished by the gang</div>
         </div>
         <div class="gq-wins">${winCount}<span>wins</span></div>
       </div>
@@ -6345,7 +6342,7 @@ function renderC4Board() {
   // Drop arrow row — one button per column
   html += '<div class="c4-drop-row">';
   for(let col = 0; col < C4_COLS; col++) {
-    const colFull = currentC4.board.every((cell, i) => i % C4_COLS !== col || cell !== '');
+    const colFull = !currentC4.board.some((cell, i) => i % C4_COLS === col && cell === '');
     html += `<div class="c4-drop-btn${canDrop && !colFull ? ' active' : ''}"
       ${canDrop && !colFull ? `onclick="dropC4(${col})"` : ''}>
       ${canDrop && !colFull ? '▼' : ''}
@@ -6451,6 +6448,7 @@ function pollC4() {
           clearInterval(c4PollTimer);
           const won = g.winner === currentUser.id, draw = g.winner === 'draw';
           document.getElementById('c4Turn').textContent = '';
+          renderC4Board(); // show final board before outcome
           showOutcome('c4', draw?'draw':won?'win':'lose', opp?.name||'Opponent');
         } else {
           document.getElementById('c4Turn').textContent = 'Your turn 👉';
@@ -7256,8 +7254,18 @@ function hideLoadingScreen() {
     } catch(e) { /* silent — don't disrupt UX on poll failure */ }
   }
   setInterval(syncFromSheets, 30000);
-  // Also sync immediately when user returns to the tab
-  document.addEventListener('visibilitychange', () => { if(!document.hidden) syncFromSheets(); });
+
+  // Poll active games every 8s regardless of tab — catches new invites quickly
+  setInterval(() => {
+    if(currentUser) renderActiveGames();
+  }, 8000);
+
+  document.addEventListener('visibilitychange', () => {
+    if(!document.hidden) {
+      syncFromSheets();
+      if(currentUser) renderActiveGames(); // immediately refresh games on focus
+    }
+  });
 
   // iOS PWA fix: 100dvh != window.innerHeight on first paint.
   // Set login screen height using actual pixel height, update on resize.
