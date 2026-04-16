@@ -1994,19 +1994,19 @@ body.compact-mode .gang-rank-list { gap:0; }
 @keyframes crownFloat { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-6px) rotate(5deg)} }
 @keyframes kingShimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
 
-.game-king-card {
+.game-queen-card {
   position:relative; overflow:hidden;
   background:linear-gradient(135deg,#1c0a00 0%,#2d1500 40%,#1c0a00 100%);
   border-radius:18px; padding:16px 18px; margin-bottom:14px;
   border:1.5px solid rgba(251,191,36,.25);
   box-shadow:0 6px 24px rgba(251,191,36,.15);
 }
-.game-king-card::before {
+.game-queen-card::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);
   background-size:20px 20px;
 }
-.game-king-card::after {
+.game-queen-card::after {
   content:''; position:absolute; inset:0; pointer-events:none;
   border-radius:18px;
   border:1.5px solid transparent;
@@ -2016,32 +2016,32 @@ body.compact-mode .gang-rank-list { gap:0; }
   animation:kingShimmer 2.5s linear infinite;
   background-position:auto, 0% center;
 }
-.gk-inner { position:relative; z-index:1; display:flex; align-items:center; gap:14px; }
-.gk-crown {
+.gq-inner { position:relative; z-index:1; display:flex; align-items:center; gap:14px; }
+.gq-crown {
   font-size:42px; flex-shrink:0;
   animation:crownFloat 3s ease-in-out infinite;
   filter:drop-shadow(0 4px 12px rgba(251,191,36,.5));
 }
-.gk-info { flex:1; min-width:0; }
-.gk-label {
+.gq-info { flex:1; min-width:0; }
+.gq-label {
   font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:800;
   color:rgba(251,191,36,.9); margin-bottom:4px; letter-spacing:.02em;
   text-transform:none;
 }
-.gk-name {
+.gq-name {
   font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800; line-height:1.1;
   background:linear-gradient(90deg,#fde68a,#fbbf24,#f59e0b,#fde68a);
   background-size:200% auto; -webkit-background-clip:text; background-clip:text;
   -webkit-text-fill-color:transparent; animation:kingShimmer 3s linear infinite;
 }
-.gk-stats { font-size:12px; color:rgba(255,255,255,.55); margin-top:3px; }
-.gk-wins {
+.gq-stats { font-size:12px; color:rgba(255,255,255,.55); margin-top:3px; }
+.gq-wins {
   font-family:'Baloo 2',sans-serif; font-size:36px; font-weight:800;
   color:#fbbf24; line-height:1; text-align:center; flex-shrink:0;
   text-shadow:0 2px 12px rgba(251,191,36,.4);
 }
-.gk-wins span { font-size:12px; font-weight:600; color:rgba(251,191,36,.6); display:block; }
-.gk-empty {
+.gq-wins span { font-size:12px; font-weight:600; color:rgba(251,191,36,.6); display:block; }
+.gq-empty {
   position:relative; z-index:1; text-align:center;
   font-size:13px; color:rgba(255,255,255,.4); padding:6px 0;
 }
@@ -2075,9 +2075,24 @@ body.compact-mode .gang-rank-list { gap:0; }
   display:grid; grid-template-columns:repeat(7,1fr);
   gap:5px; margin:0 auto 16px; max-width:340px;
   background:rgba(30,58,138,.6); border-radius:14px;
-  padding:10px; position:relative; z-index:1;
+  padding:8px 10px 10px; position:relative; z-index:1;
   border:2px solid rgba(59,130,246,.3);
 }
+.c4-drop-row {
+  grid-column: 1 / -1;
+  display:grid; grid-template-columns:repeat(7,1fr); gap:5px;
+  margin-bottom:4px;
+}
+.c4-drop-btn {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:14px; color:rgba(251,191,36,.7); cursor:default;
+  border-radius:6px; transition:all .15s; min-height:24px;
+}
+.c4-drop-btn.active {
+  cursor:pointer; color:rgba(251,191,36,.9);
+  -webkit-tap-highlight-color:transparent;
+}
+.c4-drop-btn.active:active { transform:scale(.85); color:#fbbf24; }
 .c4-cell {
   aspect-ratio:1; border-radius:50%;
   background:rgba(0,0,0,.5); border:2px solid rgba(255,255,255,.08);
@@ -2094,6 +2109,10 @@ body.compact-mode .gang-rank-list { gap:0; }
 /* ════════════════
    ROCK PAPER SCISSORS
 ════════════════ */
+@keyframes rpsSlam { 0%{transform:scale(0) rotate(-20deg);opacity:0} 60%{transform:scale(1.2) rotate(5deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes rpsShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+@keyframes rpsFadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
 .rps-modal {
   position:fixed; inset:0; z-index:9400;
   background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
@@ -2116,50 +2135,61 @@ body.compact-mode .gang-rank-list { gap:0; }
   background-size:22px 22px;
 }
 .rps-modal.open .rps-sheet { transform:translateY(0); }
+
+/* Round tracker */
 .rps-rounds {
-  display:flex; justify-content:center; gap:10px; margin-bottom:16px;
+  display:flex; justify-content:center; gap:10px; margin-bottom:14px;
   position:relative; z-index:1;
 }
 .rps-round-dot {
-  width:28px; height:28px; border-radius:50%;
+  width:32px; height:32px; border-radius:50%;
   background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.15);
-  display:flex; align-items:center; justify-content:center; font-size:13px;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+  transition:all .3s;
 }
-.rps-round-dot.win  { background:rgba(34,197,94,.3); border-color:rgba(34,197,94,.7); }
-.rps-round-dot.lose { background:rgba(239,68,68,.3); border-color:rgba(239,68,68,.7); }
-.rps-round-dot.draw { background:rgba(251,191,36,.3); border-color:rgba(251,191,36,.7); }
+.rps-round-dot.win  { background:rgba(34,197,94,.35); border-color:rgba(34,197,94,.8); animation:rpsSlam .4s cubic-bezier(.175,.885,.32,1.275); }
+.rps-round-dot.lose { background:rgba(239,68,68,.35); border-color:rgba(239,68,68,.8); animation:rpsSlam .4s cubic-bezier(.175,.885,.32,1.275); }
+.rps-round-dot.draw { background:rgba(251,191,36,.35); border-color:rgba(251,191,36,.8); animation:rpsSlam .4s cubic-bezier(.175,.885,.32,1.275); }
+
+/* Weapon choices */
 .rps-pick-label {
-  text-align:center; font-size:13px; color:rgba(255,255,255,.6);
+  text-align:center; font-size:13px; color:rgba(255,255,255,.65);
   margin-bottom:14px; position:relative; z-index:1; font-weight:600;
-  letter-spacing:.05em;
+  letter-spacing:.05em; animation:rpsFadeIn .3s ease both;
 }
 .rps-choices {
   display:flex; gap:10px; justify-content:center;
   margin-bottom:16px; position:relative; z-index:1;
 }
 .rps-btn {
-  display:flex; flex-direction:column; align-items:center; gap:6px;
-  background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.15);
-  border-radius:16px; padding:16px 20px; cursor:pointer; flex:1;
-  font-size:32px; color:#fff; font-family:'Nunito',sans-serif;
-  font-size:11px; font-weight:700; transition:all .18s;
-  -webkit-tap-highlight-color:transparent;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  background:rgba(255,255,255,.07); border:2px solid rgba(255,255,255,.12);
+  border-radius:18px; padding:18px 14px; cursor:pointer; flex:1;
+  color:#fff; transition:all .18s; -webkit-tap-highlight-color:transparent;
 }
-.rps-btn span { font-size:11px; font-weight:700; color:rgba(255,255,255,.7); }
-.rps-btn:active { transform:scale(.93); background:rgba(34,197,94,.2); border-color:rgba(34,197,94,.6); }
-.rps-btn .rps-emoji { font-size:36px; }
-.rps-waiting {
-  text-align:center; padding:20px; font-size:14px; color:rgba(255,255,255,.5);
-  position:relative; z-index:1; animation:turnPulse 1.5s ease-in-out infinite;
+.rps-btn .rps-emoji { font-size:38px; transition:transform .15s; display:block; }
+.rps-btn span { font-size:11px; font-weight:700; color:rgba(255,255,255,.6); letter-spacing:.06em; text-transform:uppercase; }
+.rps-btn:active { transform:scale(.91); }
+.rps-btn:active .rps-emoji { transform:scale(1.2) rotate(-10deg); }
+
+/* Round reveal */
+.rps-reveal-wrap {
+  display:none; justify-content:center; align-items:center;
+  gap:12px; margin-bottom:14px; position:relative; z-index:1;
 }
-.rps-reveal {
-  display:flex; align-items:center; justify-content:center;
-  gap:16px; margin-bottom:16px; position:relative; z-index:1;
+.rps-reveal-wrap.show { display:flex; }
+.rps-reveal-side { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.rps-reveal-emoji { font-size:52px; animation:rpsSlam .4s cubic-bezier(.175,.885,.32,1.275) both; }
+.rps-reveal-label { font-size:10px; color:rgba(255,255,255,.5); font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.rps-reveal-vs { font-size:20px; font-weight:800; color:rgba(255,255,255,.3); }
+.rps-round-result {
+  text-align:center; font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:800;
+  margin-bottom:10px; position:relative; z-index:1;
+  animation:rpsFadeIn .3s .2s ease both;
 }
-.rps-reveal-side { display:flex; flex-direction:column; align-items:center; gap:4px; }
-.rps-reveal-emoji { font-size:48px; animation:outcomePop .4s cubic-bezier(.175,.885,.32,1.275) both; }
-.rps-reveal-label { font-size:10px; color:rgba(255,255,255,.5); font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
-.rps-reveal-vs { font-size:16px; font-weight:800; color:rgba(255,255,255,.4); }
+.rps-round-result.win   { color:#4ade80; }
+.rps-round-result.lose  { color:#f87171; }
+.rps-round-result.draw2 { color:#fbbf24; }
 
 /* ════════════════
    FORFEIT WHEEL MODAL
@@ -3059,10 +3089,22 @@ syncHtmlBg('loading');
     </div>
     <div class="rps-rounds" id="rpsRounds"></div>
     <div class="rps-pick-label" id="rpsPickLabel">Choose your weapon</div>
+    <div class="rps-reveal-wrap" id="rpsRevealWrap">
+      <div class="rps-reveal-side">
+        <span class="rps-reveal-emoji" id="rpsMyEmoji"></span>
+        <span class="rps-reveal-label">You</span>
+      </div>
+      <span class="rps-reveal-vs">vs</span>
+      <div class="rps-reveal-side">
+        <span class="rps-reveal-emoji" id="rpsOppEmoji"></span>
+        <span class="rps-reveal-label" id="rpsOppLabel">Them</span>
+      </div>
+    </div>
+    <div class="rps-round-result" id="rpsRoundResult"></div>
     <div class="rps-choices" id="rpsChoices">
-      <button class="rps-btn" onclick="makeRPSMove('rock')">🪨<span>Rock</span></button>
-      <button class="rps-btn" onclick="makeRPSMove('paper')">📄<span>Paper</span></button>
-      <button class="rps-btn" onclick="makeRPSMove('scissors')">✂️<span>Scissors</span></button>
+      <button class="rps-btn" onclick="makeRPSMove('rock')"><span class="rps-emoji">🪨</span><span>Rock</span></button>
+      <button class="rps-btn" onclick="makeRPSMove('paper')"><span class="rps-emoji">📄</span><span>Paper</span></button>
+      <button class="rps-btn" onclick="makeRPSMove('scissors')"><span class="rps-emoji">✂️</span><span>Scissors</span></button>
     </div>
     <div class="ttt-outcome" id="rpsOutcome" style="display:none">
       <div class="ttt-outcome-emoji" id="rpsOutcomeEmoji"></div>
@@ -3503,7 +3545,7 @@ syncHtmlBg('loading');
         </div>
       </div>
 
-      <!-- Game King -->
+      <!-- Game Queen -->
       <div id="gameKingSlot"></div>
 
       <!-- Active games -->
@@ -6188,12 +6230,12 @@ async function renderGameKing() {
   if(!slot) return;
 
   // Show empty state immediately while loading
-  slot.innerHTML = `<div class="game-king-card">
-    <div class="gk-inner">
-      <div class="gk-crown">👑</div>
-      <div class="gk-info">
-        <div class="gk-label">Game King</div>
-        <div class="gk-empty">No games finished yet — be the first to win!</div>
+  slot.innerHTML = `<div class="game-queen-card">
+    <div class="gq-inner">
+      <div class="gq-crown">👑</div>
+      <div class="gq-info">
+        <div class="gq-label">Game Queen</div>
+        <div class="gq-empty">No games finished yet — be the first to win!</div>
       </div>
     </div>
   </div>`;
@@ -6201,8 +6243,11 @@ async function renderGameKing() {
   if(!db.url || !db.key) return;
 
   try {
+    // Only count wins from the current calendar month
+    const now = new Date();
+    const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
     const res = await fetch(
-      `${db.url}/rest/v1/game_sessions?status=eq.finished&select=winner`,
+      `${db.url}/rest/v1/game_sessions?status=eq.finished&select=winner&created_at=gte.${monthStart}T00:00:00.000Z`,
       { headers: db._headers() }
     );
     if(!res.ok) { slot.innerHTML=''; return; }
@@ -6217,12 +6262,12 @@ async function renderGameKing() {
     });
 
     if(!Object.keys(wins).length) {
-      slot.innerHTML = `<div class="game-king-card">
-        <div class="gk-inner">
-          <div class="gk-crown">👑</div>
-          <div class="gk-info">
-            <div class="gk-label">Game King</div>
-            <div class="gk-empty">No games finished yet — be the first to win!</div>
+      slot.innerHTML = `<div class="game-queen-card">
+        <div class="gq-inner">
+          <div class="gq-crown">👑</div>
+          <div class="gq-info">
+            <div class="gq-label">Game Queen</div>
+            <div class="gq-empty">No games finished yet — be the first to win!</div>
           </div>
         </div>
       </div>`;
@@ -6237,15 +6282,15 @@ async function renderGameKing() {
     const winCount   = wins[topId];
     const losses     = Object.values(wins).reduce((a,b) => a+b, 0);
 
-    slot.innerHTML = `<div class="game-king-card">
-      <div class="gk-inner">
-        <div class="gk-crown">👑</div>
-        <div class="gk-info">
-          <div class="gk-label">Game King</div>
-          <div class="gk-name">${king.avatar} ${king.name}</div>
-          <div class="gk-stats">${winCount} win${winCount!==1?'s':''} from ${totalGames} game${totalGames!==1?'s':''} played</div>
+    slot.innerHTML = `<div class="game-queen-card">
+      <div class="gq-inner">
+        <div class="gq-crown">👑</div>
+        <div class="gq-info">
+          <div class="gq-label">Game Queen</div>
+          <div class="gq-name">${king.avatar} ${king.name}</div>
+          <div class="gq-stats">${winCount} win${winCount!==1?'s':''} this month · ${totalGames} game${totalGames!==1?'s':''} played</div>
         </div>
-        <div class="gk-wins">${winCount}<span>wins</span></div>
+        <div class="gq-wins">${winCount}<span>wins</span></div>
       </div>
     </div>`;
   } catch(e) { slot.innerHTML=''; }
@@ -6294,12 +6339,27 @@ function renderC4Board() {
   const oppPiece = myPiece === 'x' ? 'o' : 'x';
   const canDrop  = currentC4.myTurn && (currentC4.status === 'active' || currentC4.status === 'pending');
 
-  board.innerHTML = currentC4.board.map((cell, i) => {
-    const col = i % C4_COLS;
+  // Build column-by-column drop buttons row at top + the 6x7 grid
+  let html = '';
+
+  // Drop arrow row — one button per column
+  html += '<div class="c4-drop-row">';
+  for(let col = 0; col < C4_COLS; col++) {
+    const colFull = currentC4.board.every((cell, i) => i % C4_COLS !== col || cell !== '');
+    html += `<div class="c4-drop-btn${canDrop && !colFull ? ' active' : ''}"
+      ${canDrop && !colFull ? `onclick="dropC4(${col})"` : ''}>
+      ${canDrop && !colFull ? '▼' : ''}
+    </div>`;
+  }
+  html += '</div>';
+
+  // Grid cells — display only, no onclick
+  currentC4.board.forEach((cell, i) => {
     const cls = cell ? (cell === currentC4.mySymbol ? myPiece : oppPiece) : '';
-    return `<div class="c4-cell${cls ? ' taken ' + cls : ''}"
-      ${canDrop && !cell && isLowestEmpty(currentC4.board, col, i) ? `onclick="dropC4(${col})"` : ''}></div>`;
-  }).join('');
+    html += `<div class="c4-cell${cls ? ' taken ' + cls : ''}"></div>`;
+  });
+
+  board.innerHTML = html;
 }
 
 function isLowestEmpty(board, col, idx) {
@@ -6431,12 +6491,18 @@ function openRPS(opp, g) {
   if(g.status !== 'finished') pollRPS(opp);
 }
 
+function rpsRoundResult(myChoice, oppChoice) {
+  if(myChoice === oppChoice) return 'draw';
+  return RPS_WINS[myChoice] === oppChoice ? 'win' : 'lose';
+}
+
 function renderRPSState(opp, g) {
-  const state = typeof g.board === 'string' ? JSON.parse(g.board) : g.board;
+  // Always deep copy from JSON
+  const state  = JSON.parse(typeof g.board === 'string' ? g.board : JSON.stringify(g.board));
   const rounds = state.rounds || [];
   const current = state.current || { x: null, o: null };
-  const isX = currentRPS.mySymbol === 'X';
-  const myKey = isX ? 'x' : 'o';
+  const isX    = currentRPS.mySymbol === 'X';
+  const myKey  = isX ? 'x' : 'o';
   const oppKey = isX ? 'o' : 'x';
 
   // Round dots
@@ -6445,76 +6511,91 @@ function renderRPSState(opp, g) {
     dotsEl.innerHTML = [0,1,2].map(i => {
       const r = rounds[i];
       if(!r) return `<div class="rps-round-dot">${i+1}</div>`;
-      const myChoice = isX ? r.x : r.o;
-      const oppChoice = isX ? r.o : r.x;
-      const won = RPS_WINS[myChoice] === oppChoice;
-      const drew = myChoice === oppChoice;
-      return `<div class="rps-round-dot ${drew?'draw':won?'win':'lose'}">${drew?'🤝':won?'✓':'✗'}</div>`;
+      const res = rpsRoundResult(isX ? r.x : r.o, isX ? r.o : r.x);
+      return `<div class="rps-round-dot ${res==='draw'?'draw':res==='win'?'win':'lose'}">${res==='draw'?'🤝':res==='win'?'✓':'✗'}</div>`;
     }).join('');
   }
 
-  const myScore  = rounds.filter(r=>{ const mc=isX?r.x:r.o, oc=isX?r.o:r.x; return RPS_WINS[mc]===oc; }).length;
-  const oppScore = rounds.filter(r=>{ const mc=isX?r.x:r.o, oc=isX?r.o:r.x; return RPS_WINS[oc]===mc; }).length;
+  const myScore  = rounds.filter(r => rpsRoundResult(isX?r.x:r.o, isX?r.o:r.x) === 'win').length;
+  const oppScore = rounds.filter(r => rpsRoundResult(isX?r.x:r.o, isX?r.o:r.x) === 'lose').length;
 
-  const turnEl = document.getElementById('rpsTurn');
-  const labelEl = document.getElementById('rpsPickLabel');
+  const turnEl    = document.getElementById('rpsTurn');
+  const labelEl   = document.getElementById('rpsPickLabel');
   const choicesEl = document.getElementById('rpsChoices');
+  const revealEl  = document.getElementById('rpsRevealWrap');
+  const roundRes  = document.getElementById('rpsRoundResult');
 
-  // Check overall winner
-  if(myScore >= 2 || oppScore >= 2 || rounds.length >= 3) {
-    const totalDone = rounds.length >= 3 || myScore >= 2 || oppScore >= 2;
-    if(totalDone) {
-      if(turnEl) turnEl.textContent = '';
-      if(choicesEl) choicesEl.style.display = 'none';
-      if(labelEl) labelEl.style.display = 'none';
-      const won = myScore > oppScore, drew = myScore === oppScore;
-      showOutcome('rps', drew?'draw':won?'win':'lose', opp?.name||'Opponent');
-      return;
+  // Show overall outcome if game is done
+  if(g.status === 'finished' || myScore >= 2 || oppScore >= 2 || rounds.length >= 3) {
+    if(turnEl)   turnEl.textContent = '';
+    if(choicesEl) choicesEl.style.display = 'none';
+    if(labelEl)  labelEl.style.display = 'none';
+    if(revealEl) revealEl.classList.remove('show');
+    if(roundRes) roundRes.style.display = 'none';
+    const won = myScore > oppScore, drew = myScore === oppScore;
+    showOutcome('rps', drew?'draw':won?'win':'lose', opp?.name||'Opponent');
+    return;
+  }
+
+  // Show last resolved round result if any
+  const lastRound = rounds[rounds.length - 1];
+  if(lastRound && revealEl) {
+    const myC  = isX ? lastRound.x : lastRound.o;
+    const oppC = isX ? lastRound.o : lastRound.x;
+    const res  = rpsRoundResult(myC, oppC);
+    document.getElementById('rpsMyEmoji').textContent  = RPS_EMOJI[myC];
+    document.getElementById('rpsOppEmoji').textContent = RPS_EMOJI[oppC];
+    if(document.getElementById('rpsOppLabel')) document.getElementById('rpsOppLabel').textContent = opp?.name || 'Them';
+    revealEl.classList.add('show');
+    if(roundRes) {
+      roundRes.textContent   = res==='draw' ? "Draw! 🤝" : res==='win' ? "You won that round! ✓" : "They won that round ✗";
+      roundRes.className     = `rps-round-result ${res==='draw'?'draw2':res}`;
+      roundRes.style.display = 'block';
     }
+  } else {
+    if(revealEl) revealEl.classList.remove('show');
+    if(roundRes) roundRes.style.display = 'none';
   }
 
   const iHavePicked = !!current[myKey];
-
   if(iHavePicked) {
     if(choicesEl) choicesEl.style.display = 'none';
-    if(labelEl) labelEl.textContent = `You picked ${RPS_EMOJI[current[myKey]]} — waiting for ${opp?.name}…`;
-    if(turnEl) { turnEl.textContent = ''; }
+    if(labelEl)  { labelEl.style.display = 'block'; labelEl.textContent = `You picked ${RPS_EMOJI[current[myKey]]} — waiting for ${opp?.name}…`; }
+    if(turnEl)   { turnEl.textContent = ''; }
   } else {
     if(choicesEl) choicesEl.style.display = 'flex';
-    if(labelEl) labelEl.textContent = 'Choose your weapon';
-    if(turnEl) { turnEl.textContent = `Round ${rounds.length + 1} of 3`; turnEl.className = 'ttt-turn'; }
+    if(labelEl)  { labelEl.style.display = 'block'; labelEl.textContent = 'Choose your weapon'; }
+    if(turnEl)   { turnEl.textContent = `Round ${rounds.length + 1} of 3`; turnEl.className = 'ttt-turn'; }
   }
 }
 
 async function makeRPSMove(choice) {
   if(!currentRPS) return;
-  const isX = currentRPS.mySymbol === 'X';
-  const myKey = isX ? 'x' : 'o';
+  const isX  = currentRPS.mySymbol === 'X';
+  const myKey  = isX ? 'x' : 'o';
   const oppKey = isX ? 'o' : 'x';
 
-  const state = { ...currentRPS.state };
+  // Deep copy to avoid reference mutation
+  const state = JSON.parse(JSON.stringify(currentRPS.state));
+  if(!state.rounds)  state.rounds  = [];
   if(!state.current) state.current = { x: null, o: null };
-  if(state.current[myKey]) return; // already picked
+  if(state.current[myKey]) return; // already picked this round
 
-  state.current[myKey] = choice;
+  state.current = { ...state.current, [myKey]: choice };
 
-  // Both picked — resolve round
-  if(state.current[myKey] && state.current[oppKey]) {
-    if(!state.rounds) state.rounds = [];
-    state.rounds.push({ ...state.current });
+  // If both picked, resolve round
+  if(state.current.x && state.current.o) {
+    state.rounds.push({ x: state.current.x, o: state.current.o });
     state.current = { x: null, o: null };
   }
 
   currentRPS.state = state;
 
-  // Check winner
-  const rounds = state.rounds || [];
-  const myScore  = rounds.filter(r=>{ const mc=isX?r.x:r.o,oc=isX?r.o:r.x; return RPS_WINS[mc]===oc; }).length;
-  const oppScore = rounds.filter(r=>{ const mc=isX?r.x:r.o,oc=isX?r.o:r.x; return RPS_WINS[oc]===mc; }).length;
-  const finished = myScore>=2 || oppScore>=2 || rounds.length>=3;
+  const myScore  = state.rounds.filter(r => rpsRoundResult(isX?r.x:r.o, isX?r.o:r.x) === 'win').length;
+  const oppScore = state.rounds.filter(r => rpsRoundResult(isX?r.x:r.o, isX?r.o:r.x) === 'lose').length;
+  const finished = myScore >= 2 || oppScore >= 2 || state.rounds.length >= 3;
 
-  // Re-render
-  const opp = MEMBERS.find(m=>m.id===currentRPS.oppId);
+  const opp = MEMBERS.find(m => m.id === currentRPS.oppId);
   renderRPSState(opp, { board: JSON.stringify(state), status: finished?'finished':'active' });
 
   try {
