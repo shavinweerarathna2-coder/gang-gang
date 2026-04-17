@@ -2229,10 +2229,18 @@ body.compact-mode .gang-rank-list { gap:0; }
 .rps-round-dot.draw { background:rgba(251,191,36,.35); border-color:rgba(251,191,36,.8); animation:rpsSlam .4s cubic-bezier(.175,.885,.32,1.275); }
 
 /* Weapon choices */
+.rps-round-label {
+  font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800;
+  color:#fff; text-align:center; margin-bottom:4px;
+  position:relative; z-index:1;
+  animation:turnPulse 1.5s ease-in-out infinite;
+}
+.rps-round-label.waiting { font-size:13px; color:rgba(255,255,255,.5); animation:none; font-family:'Nunito',sans-serif; font-weight:600; }
+
 .rps-pick-label {
-  text-align:center; font-size:13px; color:rgba(255,255,255,.65);
-  margin-bottom:14px; position:relative; z-index:1; font-weight:600;
-  letter-spacing:.05em; animation:rpsFadeIn .3s ease both;
+  text-align:center; font-size:15px; color:rgba(255,255,255,.9);
+  margin-bottom:12px; margin-top:10px; position:relative; z-index:1; font-weight:800;
+  font-family:'Baloo 2',sans-serif; animation:rpsFadeIn .3s ease both;
 }
 .rps-choices {
   display:flex; gap:10px; justify-content:center;
@@ -3162,10 +3170,9 @@ syncHtmlBg('loading');
     <div class="ttt-handle"></div>
     <div class="ttt-header">
       <div class="ttt-vs" id="rpsVs"></div>
-      <div class="ttt-turn" id="rpsTurn"></div>
+      <div class="rps-round-label" id="rpsTurn"></div>
     </div>
     <div class="rps-rounds" id="rpsRounds"></div>
-    <div class="rps-pick-label" id="rpsPickLabel">Choose your weapon</div>
     <div class="rps-reveal-wrap" id="rpsRevealWrap">
       <div class="rps-reveal-side">
         <span class="rps-reveal-emoji" id="rpsMyEmoji"></span>
@@ -3178,6 +3185,7 @@ syncHtmlBg('loading');
       </div>
     </div>
     <div class="rps-round-result" id="rpsRoundResult"></div>
+    <div class="rps-pick-label" id="rpsPickLabel">Choose your weapon</div>
     <div class="rps-choices" id="rpsChoices">
       <button class="rps-btn" onclick="makeRPSMove('rock')"><span class="rps-emoji">🪨</span><span>Rock</span></button>
       <button class="rps-btn" onclick="makeRPSMove('paper')"><span class="rps-emoji">📄</span><span>Paper</span></button>
@@ -5231,6 +5239,9 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 async function loadDashInsight() {
   const btn  = document.getElementById('dashInsightBtn');
   const body = document.getElementById('dashInsightBody');
+  if(!rlCheck('dash_insight', 3)) {
+    showToast('Max 3 insight reads per day'); return;
+  }
 
   const logged = MEMBERS.map(m => {
     const te = db.todayEntry(m.id);
@@ -5271,9 +5282,11 @@ async function loadDashInsight() {
     });
     const data = await res.json();
     const reply = data.content?.[0]?.text;
+    rlIncrement('dash_insight');
     body.className = 'insight-body';
     body.textContent = reply || `Gang average: ${avg}/5 today.`;
-    btn.disabled = false; btn.textContent = '↺ Re-read';
+    const remD = rlRemaining('dash_insight', 3);
+    btn.disabled = false; btn.textContent = remD > 0 ? `↺ Re-read (${remD} left)` : '↺ Re-read';
   } catch(e) {
     body.className = 'insight-body';
     body.textContent = `Gang average today: ${avg}/5. ${logged.length}/${MEMBERS.length} members logged.`;
@@ -5303,6 +5316,7 @@ async function loadGangInsight() {
   const withData = allData.filter(d=>d.entries.length>0);
   if(withData.length<2){ showToast('Need at least 2 members logged'); return; }
 
+  if(!rlCheck('gang_insight', 3)) { showToast('Max 3 gang insight reads per day'); return; }
   btn.disabled=true; btn.textContent='✨ Reading the room…';
   if(result) result.style.display='block';
   body.className='insight-body-lg dim';
@@ -5329,9 +5343,11 @@ async function loadGangInsight() {
       const data = await res.json();
       const reply = data.content?.[0]?.text;
       if(reply) {
+        rlIncrement('gang_insight');
         body.className='insight-body-lg';
         body.textContent = reply;
-        btn.disabled=false; btn.textContent='✨ Re-read the room';
+        const remG = rlRemaining('gang_insight', 3);
+        btn.disabled=false; btn.textContent=remG > 0 ? `✨ Re-read (${remG} left)` : '✨ Re-read the room';
         return;
       }
     } catch(e) { /* fall through to template */ }
@@ -6030,6 +6046,20 @@ async function createGame(type, oppId) {
   closeAllSheets();
   if(!db.url || !db.key) { showToast('Supabase not connected'); return; }
   const opp = MEMBERS.find(m => m.id === oppId);
+
+  // Check if an active/pending game already exists between these two players
+  try {
+    const checkRes = await fetch(
+      `${db.url}/rest/v1/game_sessions?or=(and(player_x.eq.${currentUser.id},player_o.eq.${oppId}),and(player_x.eq.${oppId},player_o.eq.${currentUser.id}))&status=in.(pending,active)&select=id`,
+      { headers: db._headers() }
+    );
+    const existing = await checkRes.json();
+    if(existing?.length > 0) {
+      showToast(`You already have an active game with ${opp.name}!`);
+      return;
+    }
+  } catch(e) { /* proceed if check fails */ }
+
   showToast(`Inviting ${opp.name}… 🎮`);
 
   try {
@@ -6162,7 +6192,7 @@ function openTTT(opp, g) {
   // Reset first, then apply state
   const outEl = document.getElementById('tttOutcome'); if(outEl) outEl.style.display='none';
   resultEl.classList.remove('show');
-  if(cbtn) cbtn.textContent='Close';
+  const cbtn = document.getElementById('tttCloseBtn'); if(cbtn) cbtn.textContent='Close';
   renderTTTBoard(); // always show the final board state
   modal.classList.add('open');
 
@@ -6332,6 +6362,26 @@ function closeTTT() {
 // ══════════════════════════════════════════════
 //  GAME KING
 // ══════════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+//  RATE LIMITING
+// ══════════════════════════════════════════════
+function rlKey(feature) {
+  return `gang_rl_${feature}_${currentUser?.id||'anon'}_${todayKey()}`;
+}
+function rlCheck(feature, max) {
+  const count = parseInt(localStorage.getItem(rlKey(feature)) || '0');
+  return count < max;
+}
+function rlIncrement(feature) {
+  const count = parseInt(localStorage.getItem(rlKey(feature)) || '0');
+  localStorage.setItem(rlKey(feature), String(count + 1));
+}
+function rlRemaining(feature, max) {
+  const count = parseInt(localStorage.getItem(rlKey(feature)) || '0');
+  return Math.max(0, max - count);
+}
+
 // ══════════════════════════════════════════════
 //  ANGIE BOT
 // ══════════════════════════════════════════════
@@ -6354,6 +6404,9 @@ function openAngieBot() {
   setTimeout(() => {
     const msgs = document.getElementById('abMessages');
     if(msgs) msgs.scrollTop = msgs.scrollHeight;
+    const rem = rlRemaining('angie_bot', 20);
+    const statusEl = document.getElementById('abStatus');
+    if(statusEl) statusEl.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} messages left today`;
   }, 100);
 }
 
@@ -6392,6 +6445,10 @@ async function sendAngieBot() {
   const input = document.getElementById('abInput');
   const text = input?.value?.trim();
   if(!text) return;
+  if(!rlCheck('angie_bot', 20)) {
+    abAddMessage(`you've used all 20 messages for today. come back tomorrow 🙄`, false);
+    return;
+  }
   input.value = '';
   input.style.height = 'auto';
   abAddMessage(text, true);
@@ -6423,8 +6480,13 @@ async function sendAngieBot() {
     const reply = data.content?.[0]?.text || data.error?.message || 'idk what to say. rare moment.';
     typingEl?.remove();
     if(statusEl) statusEl.innerHTML = '<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · chat with me';
+    rlIncrement('angie_bot');
     abHistory.push({ role:'assistant', content: reply });
     abAddMessage(reply, false);
+    // Update remaining count in status
+    const rem = rlRemaining('angie_bot', 20);
+    const statusEl2 = document.getElementById('abStatus');
+    if(statusEl2) statusEl2.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} messages left today`;
     if(abHistory.length > 20) abHistory = abHistory.slice(-20);
   } catch(e) {
     typingEl?.remove();
@@ -6758,12 +6820,12 @@ function renderRPSState(opp, g) {
   const iHavePicked = !!current[myKey];
   if(iHavePicked) {
     if(choicesEl) choicesEl.style.display = 'none';
-    if(labelEl)  { labelEl.style.display = 'block'; labelEl.textContent = `You picked ${RPS_EMOJI[current[myKey]]} — waiting for ${opp?.name}…`; }
-    if(turnEl)   { turnEl.textContent = ''; }
+    if(labelEl)  { labelEl.style.display = 'none'; }
+    if(turnEl)   { turnEl.textContent = `Waiting for ${opp?.name}… ${RPS_EMOJI[current[myKey]]} picked`; turnEl.className = 'rps-round-label waiting'; }
   } else {
     if(choicesEl) choicesEl.style.display = 'flex';
     if(labelEl)  { labelEl.style.display = 'block'; labelEl.textContent = 'Choose your weapon'; }
-    if(turnEl)   { turnEl.textContent = `Round ${rounds.length + 1} of 3`; turnEl.className = 'ttt-turn'; }
+    if(turnEl)   { turnEl.textContent = `Round ${rounds.length + 1} of 3`; turnEl.className = 'rps-round-label'; }
   }
 }
 
