@@ -3320,7 +3320,7 @@ syncHtmlBg('loading');
 
 
 <!-- ════ ANGIE BOT SHEET ════ -->
-<div class="bottom-sheet" id="angieBotSheet" style="height:55vh;max-height:55vh;overflow:hidden;display:flex;flex-direction:column">
+<div class="bottom-sheet" id="angieBotSheet" style="height:72vh;max-height:72vh;overflow:hidden;display:flex;flex-direction:column">
   <div class="sheet-handle"></div>
   <!-- Header -->
   <div class="ab-header">
@@ -3343,7 +3343,7 @@ syncHtmlBg('loading');
     <textarea class="ab-input" id="abInput" rows="1" placeholder="say something..."
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAngieBot()}"></textarea>
-    <button class="ab-send" onclick="sendAngieBot()">➤</button>
+    <button class="ab-send" id="abSendBtn" onclick="sendAngieBot()">➤</button>
   </div>
 </div>
 
@@ -6453,7 +6453,12 @@ function openAngieBot() {
     abHistory = []; // reset history on open
     const rem = rlRemaining('angie_bot', 20);
     const statusEl = document.getElementById('abStatus');
-    if(statusEl) statusEl.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} messages left today`;
+    if(statusEl) statusEl.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} message${rem!==1?'s':''} left today`;
+    if(rem === 0) {
+      abLockInput('come back tomorrow...');
+    } else {
+      abUnlockInput();
+    }
   }, 100);
 }
 
@@ -6491,12 +6496,41 @@ function abShowTyping() {
   return div;
 }
 
+
+function abLockInput(message) {
+  const input = document.getElementById('abInput');
+  const sendBtn = document.getElementById('abSendBtn');
+  if(input) {
+    input.disabled = true;
+    input.placeholder = message;
+    input.style.opacity = '0.5';
+  }
+  if(sendBtn) {
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '0.4';
+  }
+}
+
+function abUnlockInput() {
+  const input = document.getElementById('abInput');
+  const sendBtn = document.getElementById('abSendBtn');
+  if(input) {
+    input.disabled = false;
+    input.placeholder = 'say something...';
+    input.style.opacity = '1';
+  }
+  if(sendBtn) {
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = '1';
+  }
+}
+
 async function sendAngieBot() {
   const input = document.getElementById('abInput');
   const text = input?.value?.trim();
   if(!text) return;
   if(!rlCheck('angie_bot', 20)) {
-    abAddMessage(`you've used all 20 messages for today. come back tomorrow 🙄`, false);
+    abLockInput("come back tomorrow...");
     return;
   }
   input.value = '';
@@ -6539,10 +6573,15 @@ async function sendAngieBot() {
     rlIncrement('angie_bot');
     abHistory.push({ role:'assistant', content: reply });
     abAddMessage(reply, false);
-    // Update remaining count in status
     const rem = rlRemaining('angie_bot', 20);
     const statusEl2 = document.getElementById('abStatus');
-    if(statusEl2) statusEl2.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} messages left today`;
+    if(statusEl2) statusEl2.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} message${rem!==1?'s':''} left today`;
+    if(rem === 0) {
+      setTimeout(() => {
+        abAddMessage(`that's your 20 for today. i need a break anyway 😮‍💨 come back tomorrow`, false);
+        abLockInput('come back tomorrow...');
+      }, 800);
+    }
     if(abHistory.length > 20) abHistory = abHistory.slice(-20);
   } catch(e) {
     typingEl?.remove();
