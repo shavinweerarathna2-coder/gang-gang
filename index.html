@@ -4190,7 +4190,7 @@ function openMemberSheet() {
 }
 function openMoreSheet() {
   const btn = document.getElementById('angieBotBtn');
-  if(btn) btn.style.display = (currentUser?.id === 'angie' || currentUser?.id === 'v') ? '' : 'none';
+  if(btn) btn.style.display = (currentUser?.id === 'angie' || currentUser?.id === 'vihara') ? '' : 'none';
   openSheet('moreSheet');
 }
 
@@ -6435,12 +6435,12 @@ function openAngieBot() {
     const msgs = document.getElementById('abMessages');
     // Set personalised greeting based on current user
     const greetings = {
-      v:    `oh it's you again 🙄 what is it now`,
-      bigd: `bro 😭 you actually opened this. good boy 🐶 what do you need`,
-      yasi: `bro you came to chat with a bot. a BOT. anyway what's up 🐶`,
-      nini: `oh mate 🤓 you're here. what do you want mate 🦖`,
-      sanji: `the clown has arrived 🤡 you're already cooked and you haven't even said anything yet 😮‍💨`,
-      angie: `oh brilliant. the guy who BUILT me is now talking to me. truly your most embarrassing creation. what do you want`,
+      vihara:     `oh it's you again 🙄 what is it now`,
+      bigd:       `bro 😭 you actually opened this. good boy 🐶 what do you need`,
+      yasi:       `bro you came to chat with a bot. a BOT. anyway what's up 🐶`,
+      nini:       `oh mate 🤓 you're here. what do you want mate 🦖`,
+      sanjibanji: `the clown has arrived 🤡 you're already cooked and you haven't even said anything yet 😮‍💨`,
+      angie:      `oh brilliant. the guy who BUILT me is now talking to me. truly your most embarrassing creation. what do you want`,
     };
     const greeting = currentUser ? (greetings[currentUser.id] || 'oh great, another one 🙄 what do you want') : 'oh great, another one 🙄 what do you want';
     if(msgs) {
@@ -6513,7 +6513,7 @@ async function sendAngieBot() {
     const moodContext  = todayMood
       ? `They logged their mood today as ${MOODS[todayMood.score].label} (${todayMood.score}/5).`
       : `They haven't logged their mood today yet.`;
-    const systemWithContext = AB_SYSTEM_PROMPT + `\n\nYou are currently talking to ${memberAvatar} ${memberName}. ${moodContext}`;
+    const systemWithContext = AB_SYSTEM_PROMPT + `\n\nYou are currently talking to ${memberAvatar} ${memberName} (member id: ${currentUser?.id}). ${moodContext}`;
     const res = await fetch(`${db.url}/functions/v1/angie-bot`, {
       method:'POST',
       headers:{
