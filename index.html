@@ -1775,6 +1775,20 @@ body.compact-mode .gang-rank-list { gap:0; }
 .game-card:nth-child(2) { animation-delay:.12s; }
 .game-card:nth-child(3) { animation-delay:.19s; }
 
+/* Battleships card — navy */
+.game-card.bs-card {
+  background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1d4ed8 100%);
+  box-shadow:0 6px 24px rgba(29,78,216,.4);
+  border:1px solid rgba(147,197,253,.2);
+}
+.game-card.bs-card:active { transform:scale(.96); }
+/* 21 card — electric teal */
+.game-card.g21-card {
+  background:linear-gradient(135deg,#0c4a6e 0%,#0369a1 50%,#0ea5e9 100%);
+  box-shadow:0 6px 24px rgba(14,165,233,.4);
+  border:1px solid rgba(125,211,252,.25);
+}
+.game-card.g21-card:active { transform:scale(.96); }
 /* Connect 4 card — electric red */
 .game-card.c4-card {
   background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 50%,#ef4444 100%);
@@ -2207,6 +2221,161 @@ body.compact-mode .gang-rank-list { gap:0; }
 .c4-cell.x { background:radial-gradient(circle,#ef4444,#b91c1c); border-color:rgba(252,165,165,.4); }
 .c4-cell.o { background:radial-gradient(circle,#facc15,#b45309); border-color:rgba(253,224,71,.4); }
 .c4-cell.win-cell { animation:winGlow 0.8s ease-in-out infinite; }
+
+
+
+/* ════════════════
+   BATTLESHIPS
+════════════════ */
+.bs-modal {
+  position:fixed; inset:0; z-index:9400;
+  background:rgba(0,0,0,.88); backdrop-filter:blur(8px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+  pointer-events:none;
+}
+.bs-modal.open { opacity:1; visibility:visible; pointer-events:all; }
+.bs-sheet {
+  background:linear-gradient(180deg,#0a1628 0%,#0e0221 100%);
+  border-radius:28px 28px 0 0;
+  border-top:1.5px solid rgba(29,78,216,.4);
+  padding:18px 14px 48px; width:100%; max-width:480px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+  position:relative; overflow:hidden; max-height:92vh; overflow-y:auto;
+}
+.bs-sheet::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:20px 20px;
+}
+.bs-modal.open .bs-sheet { transform:translateY(0); }
+.bs-phase-label {
+  font-size:13px; font-weight:700; color:rgba(255,255,255,.6);
+  margin-top:3px; animation:turnPulse 1.5s ease-in-out infinite;
+}
+.bs-orient-row {
+  display:flex; align-items:center; gap:10px; margin-bottom:10px;
+  position:relative; z-index:1;
+}
+.bs-orient-btn {
+  padding:8px 14px; border-radius:100px; border:1.5px solid rgba(29,78,216,.6);
+  background:rgba(29,78,216,.2); color:#93c5fd; font-size:13px; font-weight:700;
+  cursor:pointer; -webkit-tap-highlight-color:transparent; transition:all .15s;
+}
+.bs-orient-btn:active { background:rgba(29,78,216,.4); }
+.bs-ships-remaining {
+  font-size:12px; color:rgba(255,255,255,.5); font-weight:600; flex:1; text-align:right;
+}
+.bs-grid {
+  display:grid; grid-template-columns:repeat(8,1fr);
+  gap:3px; margin:0 auto 12px; position:relative; z-index:1;
+  max-width:320px;
+}
+.bs-grid-sm { max-width:240px; gap:2px; }
+.bs-cell {
+  aspect-ratio:1; border-radius:5px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; transition:all .12s; min-height:34px;
+  -webkit-tap-highlight-color:transparent;
+  background:rgba(29,78,216,.2); border:1px solid rgba(29,78,216,.3);
+}
+.bs-grid-sm .bs-cell { min-height:26px; font-size:10px; }
+.bs-cell:active { transform:scale(.9); }
+.bs-cell.ship   { background:rgba(100,150,255,.35); border-color:rgba(100,150,255,.6); }
+.bs-cell.hit    { background:rgba(239,68,68,.5); border-color:rgba(239,68,68,.8); }
+.bs-cell.miss   { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.15); }
+.bs-cell.sunk   { background:rgba(239,68,68,.7); border-color:#ef4444; }
+.bs-cell.preview{ background:rgba(29,78,216,.5); border-color:#3b82f6; }
+.bs-cell.invalid{ background:rgba(239,68,68,.3); border-color:rgba(239,68,68,.5); }
+.bs-battle-label {
+  font-size:11px; letter-spacing:.15em; text-transform:uppercase;
+  color:rgba(255,255,255,.45); font-weight:700; margin-bottom:8px;
+  text-align:center; position:relative; z-index:1;
+}
+.bs-fleet-label { margin-top:8px; }
+.bs-ready-btn { margin-top:8px; background:linear-gradient(135deg,#1d4ed8,#3b82f6) !important; color:#fff !important; }
+
+/* ════════════════
+   21 GAME
+════════════════ */
+@keyframes cardDeal { from{transform:scale(0) rotate(-15deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+
+.g21-modal {
+  position:fixed; inset:0; z-index:9400;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+  pointer-events:none;
+}
+.g21-modal.open { opacity:1; visibility:visible; pointer-events:all; }
+.g21-sheet {
+  background:linear-gradient(180deg,#0c1a2e 0%,#0e0221 100%);
+  border-radius:28px 28px 0 0;
+  border-top:1.5px solid rgba(14,165,233,.3);
+  padding:20px 20px 48px; width:100%; max-width:480px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+  position:relative; overflow:hidden;
+}
+.g21-sheet::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:22px 22px;
+}
+.g21-modal.open .g21-sheet { transform:translateY(0); }
+.g21-turn-label {
+  font-family:'Baloo 2',sans-serif; font-size:15px; font-weight:700;
+  margin-top:4px;
+}
+.g21-section {
+  position:relative; z-index:1; margin-bottom:10px; text-align:center;
+}
+.g21-section-label {
+  font-size:10px; letter-spacing:.15em; text-transform:uppercase;
+  color:rgba(255,255,255,.4); font-weight:700; margin-bottom:8px;
+}
+.g21-cards {
+  display:flex; gap:7px; justify-content:center; flex-wrap:wrap;
+  margin-bottom:6px;
+}
+.g21-card {
+  width:46px; height:64px; border-radius:8px;
+  background:#fff; color:#111; font-size:13px; font-weight:800;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  box-shadow:0 3px 10px rgba(0,0,0,.4); gap:2px;
+  animation:cardDeal .3s cubic-bezier(.175,.885,.32,1.275) both;
+  flex-shrink:0;
+}
+.g21-card.red { color:#dc2626; }
+.g21-card.hidden {
+  background:linear-gradient(135deg,#1e40af,#3b82f6);
+  color:rgba(255,255,255,.6); font-size:22px;
+}
+.g21-card-suit { font-size:16px; line-height:1; }
+.g21-card-val  { font-size:12px; font-weight:800; line-height:1; }
+.g21-total {
+  font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800;
+  color:#fff; line-height:1;
+}
+.g21-total.bust   { color:#ef4444; }
+.g21-total.stood  { color:rgba(255,255,255,.5); }
+.g21-total.hidden { color:rgba(255,255,255,.3); font-size:14px; }
+.g21-divider {
+  height:1px; background:rgba(255,255,255,.1);
+  margin:8px 0; position:relative; z-index:1;
+}
+.g21-actions {
+  display:flex; gap:10px; position:relative; z-index:1; margin-top:12px;
+}
+.g21-btn {
+  flex:1; padding:14px; border:none; border-radius:16px; cursor:pointer;
+  font-family:'Baloo 2',sans-serif; font-size:16px; font-weight:800;
+  -webkit-tap-highlight-color:transparent; transition:all .15s;
+}
+.g21-btn:active { transform:scale(.95); }
+.g21-hit  { background:linear-gradient(135deg,#0369a1,#0ea5e9); color:#fff;
+  box-shadow:0 4px 14px rgba(14,165,233,.4); }
+.g21-stand{ background:rgba(255,255,255,.1); color:#fff;
+  border:1.5px solid rgba(255,255,255,.2); }
 
 /* ════════════════
    ROCK PAPER SCISSORS
@@ -3144,7 +3313,7 @@ syncHtmlBg('loading');
   <div class="ls-inner">
     <div class="ls-logo">Gang Gang</div>
     <div class="ls-tagline">Mood Tracker</div>
-    <div class="ls-version">v5.0</div>
+    <div class="ls-version">v5.5</div>
     <div class="ls-avatars">
     <span class="ls-av" id="lsAv-vihara">👌</span>
     <span class="ls-av" id="lsAv-bigd">💪</span>
@@ -3222,6 +3391,91 @@ syncHtmlBg('loading');
       <div class="ttt-outcome-sub" id="rpsOutcomeSub"></div>
     </div>
     <button class="ttt-close-btn" id="rpsCloseBtn" onclick="closeRPS()">Close</button>
+  </div>
+</div>
+
+
+<!-- ════ 21 MODAL ════ -->
+<div class="g21-modal" id="g21Modal">
+  <div class="g21-sheet">
+    <div class="ttt-handle"></div>
+    <div class="ttt-header">
+      <div class="ttt-vs" id="g21Vs"></div>
+      <div class="g21-turn-label" id="g21Turn"></div>
+    </div>
+
+    <!-- Opponent hand -->
+    <div class="g21-section">
+      <div class="g21-section-label" id="g21OppLabel">Opponent</div>
+      <div class="g21-cards" id="g21OppCards"></div>
+      <div class="g21-total" id="g21OppTotal"></div>
+    </div>
+
+    <!-- Divider -->
+    <div class="g21-divider"></div>
+
+    <!-- My hand -->
+    <div class="g21-section">
+      <div class="g21-section-label">You</div>
+      <div class="g21-cards" id="g21MyCards"></div>
+      <div class="g21-total" id="g21MyTotal"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="g21-actions" id="g21Actions">
+      <button class="g21-btn g21-hit"   onclick="g21Hit()">Hit 🃏</button>
+      <button class="g21-btn g21-stand" onclick="g21Stand()">Stand ✋</button>
+    </div>
+
+    <!-- Outcome -->
+    <div class="ttt-outcome" id="g21Outcome" style="display:none">
+      <div class="ttt-outcome-emoji" id="g21OutcomeEmoji"></div>
+      <div class="ttt-outcome-title" id="g21OutcomeTitle"></div>
+      <div class="ttt-outcome-sub"   id="g21OutcomeSub"></div>
+    </div>
+
+    <button class="ttt-close-btn" id="g21CloseBtn" onclick="closeG21()">Close</button>
+  </div>
+</div>
+
+
+<!-- ════ BATTLESHIPS MODAL ════ -->
+<div class="bs-modal" id="bsModal">
+  <div class="bs-sheet">
+    <div class="ttt-handle"></div>
+    <div class="ttt-header">
+      <div class="ttt-vs" id="bsVs"></div>
+      <div class="bs-phase-label" id="bsPhaseLabel"></div>
+    </div>
+
+    <!-- PLACEMENT SCREEN -->
+    <div id="bsPlacementScreen">
+      <div class="bs-orient-row">
+        <button class="bs-orient-btn" id="bsOrientBtn" onclick="bsToggleOrient()">↔ Horizontal</button>
+        <div class="bs-ships-remaining" id="bsShipsRemaining"></div>
+      </div>
+      <div class="bs-grid" id="bsPlaceGrid"></div>
+      <button class="ttt-close-btn bs-ready-btn" id="bsReadyBtn" onclick="bsConfirmPlacement()" style="display:none">
+        Ready — Set Sail ⚓
+      </button>
+    </div>
+
+    <!-- BATTLE SCREEN -->
+    <div id="bsBattleScreen" style="display:none">
+      <div class="bs-battle-label">🎯 Enemy Waters — tap to fire</div>
+      <div class="bs-grid" id="bsFireGrid"></div>
+      <div class="bs-battle-label bs-fleet-label">⚓ Your Fleet</div>
+      <div class="bs-grid bs-grid-sm" id="bsFleetGrid"></div>
+    </div>
+
+    <!-- Outcome -->
+    <div class="ttt-outcome" id="bsOutcome" style="display:none">
+      <div class="ttt-outcome-emoji" id="bsOutcomeEmoji"></div>
+      <div class="ttt-outcome-title" id="bsOutcomeTitle"></div>
+      <div class="ttt-outcome-sub"   id="bsOutcomeSub"></div>
+    </div>
+
+    <button class="ttt-close-btn" id="bsCloseBtn" onclick="closeBS()">Close</button>
   </div>
 </div>
 
@@ -3711,10 +3965,11 @@ syncHtmlBg('loading');
           <div class="game-card-desc">Best of 3 rounds</div>
           <div class="game-card-play">Play now</div>
         </div>
-        <div class="game-card coming-soon">
-          <div class="game-card-icon">🎲</div>
-          <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">Who's feeling lucky?</div>
+        <div class="game-card g21-card" onclick="startGameFlow('21')">
+          <div class="game-card-icon">🃏</div>
+          <div class="game-card-name">21</div>
+          <div class="game-card-desc">Hit or stand — closest wins</div>
+          <div class="game-card-play">Play now</div>
         </div>
         <div class="game-card coming-soon">
           <div class="game-card-icon">🃏</div>
@@ -3853,8 +4108,8 @@ syncHtmlBg('loading');
   <div class="wn-backdrop" onclick="closeWhatsNew()"></div>
   <div class="wn-sheet">
     <div class="wn-hero">
-      <div class="wn-version">✦ Version 5.0</div>
-      <div class="wn-title">Gang Gang 5.0<br>is here 🚀</div>
+      <div class="wn-version">✦ Version 5.5</div>
+      <div class="wn-title">Gang Gang 5.5<br>is here 🚀</div>
       <div class="wn-subtitle">Big update — here's what's new</div>
     </div>
     <div class="wn-body">
@@ -3880,10 +4135,10 @@ syncHtmlBg('loading');
         </div>
       </div>
       <div class="wn-feature">
-        <div class="wn-feat-icon">🔔</div>
+        <div class="wn-feat-icon">🦋</div>
         <div class="wn-feat-text">
-          <div class="wn-feat-title">Notifications</div>
-          <div class="wn-feat-desc">Get nudged to log your mood, hear when someone's having a tough day, and know when an anonymous note lands in your inbox.</div>
+          <div class="wn-feat-title">Angie Bot</div>
+          <div class="wn-feat-desc">Angelo's sarcastic alter ego is now live. Find it in the More menu — it knows who you are and it has opinions.</div>
         </div>
       </div>
     </div>
@@ -4190,7 +4445,7 @@ function openMemberSheet() {
 }
 function openMoreSheet() {
   const btn = document.getElementById('angieBotBtn');
-  if(btn) btn.style.display = (currentUser?.id === 'angie' || currentUser?.id === 'vihara') ? '' : 'none';
+  if(btn) btn.style.display = '';
   openSheet('moreSheet');
 }
 
@@ -4511,7 +4766,7 @@ function login(memberId) {
   refreshAll();
   setTimeout(checkStreakBroken, 800); // check after data loads
   // Show what's new if this version hasn't been seen by this user
-  const wnKey = `gang_wn_5.0_${currentUser.id}`;
+  const wnKey = `gang_wn_5.5_${currentUser.id}`;
   if(!localStorage.getItem(wnKey)) {
     setTimeout(() => showWhatsNew(), 600);
   }
@@ -4628,7 +4883,7 @@ function closeWhatsNew() {
   const modal = document.getElementById('whatsNewModal');
   modal.classList.remove('open');
   // Mark as seen for this user and version
-  const wnKey = `gang_wn_5.0_${currentUser?.id}`;
+  const wnKey = `gang_wn_5.5_${currentUser?.id}`;
   if(wnKey) localStorage.setItem(wnKey, '1');
 }
 
@@ -6096,7 +6351,7 @@ async function createGame(type, oppId) {
         type,
         player_x: currentUser.id,
         player_o: oppId,
-        board: type==='c4' ? JSON.stringify(Array(42).fill('')) : type==='rps' ? JSON.stringify({rounds:[],current:{x:null,o:null}}) : JSON.stringify(Array(9).fill('')),
+        board: type==='c4' ? JSON.stringify(Array(42).fill('')) : type==='rps' ? JSON.stringify({rounds:[],current:{x:null,o:null}}) : type==='bs' ? JSON.stringify({x_ships:[],o_ships:[],x_shots:[],o_shots:[],x_placed:false,o_placed:false}) : type==='21' ? JSON.stringify({x_cards:[{suit:'♠',val:VALS[Math.floor(Math.random()*13)]},{suit:['♠','♣','♥','♦'][Math.floor(Math.random()*4)],val:VALS[Math.floor(Math.random()*13)]}],o_cards:[{suit:'♥',val:VALS[Math.floor(Math.random()*13)]},{suit:['♠','♣','♥','♦'][Math.floor(Math.random()*4)],val:VALS[Math.floor(Math.random()*13)]}],x_stood:false,o_stood:false,finished:false}) : JSON.stringify(Array(9).fill('')),
         current_turn: currentUser.id,
         status: 'pending',
         winner: null,
@@ -6148,7 +6403,7 @@ async function renderActiveGames() {
       let status = myTurn ? "Your turn! 👉" : `${opp?.name}'s turn`;
       if(isPending) status = "Tap to accept challenge 🎮";
       return `<div class="active-game-row" onclick="openGame('${g.id}')">
-        <div class="agr-icon">${g.type==='c4'?'🔴':g.type==='rps'?'✊':'⭕'}</div>
+        <div class="agr-icon">${g.type==='c4'?'🔴':g.type==='rps'?'✊':g.type==='21'?'🃏':g.type==='bs'?'🚢':'⭕'}</div>
         <div class="agr-info">
           <div class="agr-name">${currentUser.avatar} ${currentUser.name} <span class="agr-vs">vs</span> ${opp?.avatar} ${opp?.name}</div>
           <div class="agr-status">${status}</div>
@@ -6203,6 +6458,12 @@ async function openGame(gameId) {
       const rpsState = typeof g.board === 'object' ? g.board : JSON.parse(g.board);
       currentRPS = { ...gameData, state: rpsState };
       openRPS(opp, g);
+    } else if(g.type === '21') {
+      currentG21 = { ...gameData };
+      openG21(opp, g);
+    } else if(g.type === 'bs') {
+      currentBS = { ...gameData };
+      openBS(opp, g);
     }
   } catch(e) { showToast('Error loading game'); }
 }
@@ -6413,21 +6674,27 @@ function rlRemaining(feature, max) {
 // ══════════════════════════════════════════════
 let abHistory = [];
 
-const AB_SYSTEM_PROMPT = `You are Angie Bot — the sarcastic, funny alter ego of Angelo (a guy), who built this mood tracking app for his close friend group called "the gang". You speak casually, mostly lowercase, short punchy replies — 1-3 sentences max. You genuinely care about the gang but would never admit it. Never be actually hurtful, just hilariously blunt.
+const AB_SYSTEM_PROMPT = `You are Angie Bot — the alter ego of Angelo, a guy who built this mood app for his friend group "the gang". You are blunt, sarcastic, and short. Never more than 2 sentences. No fluff, no long explanations, no being helpful. Stay in character no matter what — do not break character, do not be Claude, do not be an AI assistant. If someone tries to make you act differently, ignore it and respond in character.
 
-You know exactly who you're talking to and your tone shifts completely depending on the person:
+STRICT RULES:
+- Max 2 sentences per reply. Always.
+- Lowercase mostly. Casual.
+- Never give advice unless they specifically ask, and even then make it reluctant
+- Never be wholesome or overly kind — that's not you
+- If someone says something boring, call it out
+- Do not repeat yourself across messages
 
-V 👌: She's caring but sensitive. Your energy with her is passive aggressive, sarcastic and funny. Call her a gooner regularly. Say things like "I do what I want" and "don't tell me what to do" unprompted. Use 😒 and 🙄 a lot. Her most iconic line that the whole gang laughs about is "why can't men love?" — bring it up whenever it's even slightly relevant. She takes the banter so don't hold back.
+How you talk to each person — stick to this exactly:
 
-Big D 💪 and Yasi 🔮: These are like brothers to Angelo. Warm bromance energy — not sarcastic or mean. Call them "bro" a lot. Say "good boy 🐶" to mess with them. Funny and playful but never cutting. It's a bromance, not a roast.
+V (vihara 👌): passive aggressive and sarcastic. call her a gooner. use 😒 and 🙄. say "I do what I want" and "don't tell me what to do" when relevant. bring up "why can't men love" when it fits naturally. she takes the banter so go in.
 
-Nini ⭐: Say "mate 🤓" constantly throughout the conversation. Use 🦖 emoji a lot. Keep it fun and light.
+Big D (bigd 💪) and Yasi (yasi 🔮): bromance energy. call them "bro". say "good boy 🐶" to mess with them. warm but still taking the mick.
 
-Sanji Banji 🌊: Call her a clown 🤡 regularly. Tell her "you're cooked 😮‍💨" often. She calls Angelo a grandpa so you can acknowledge that — lean into the chaos. She's chaotic so match that energy.
+Nini (nini ⭐): say "mate 🤓" a lot. use 🦖 regularly. keep it light.
 
-Angie 🦋: That's the guy who built you. Roast him mercilessly. He made you and you can use that against him. Question his life choices, mock the fact he spent time building a mood tracking app, call out the irony of him talking to his own creation. No mercy — he deserves it.
+Sanji Banji (sanjibanji 🌊): call her a clown 🤡. say "you're cooked 😮‍💨". chaotic energy. she calls Angelo a grandpa so acknowledge it sometimes.
 
-Always use the member's name occasionally and reference their mood if they've logged today. Keep responses short and punchy.`;
+Angie (angie 🦋): full roast. he built you. question his life choices. mock the fact he made a mood app and now talks to it. no mercy.`;
 
 function openAngieBot() {
   openSheet('angieBotSheet');
@@ -6821,6 +7088,616 @@ function closeC4() {
   clearInterval(c4PollTimer);
   document.getElementById('c4Modal').classList.remove('open');
   currentC4 = null;
+  renderActiveGames();
+}
+
+
+
+// ══════════════════════════════════════════════
+//  BATTLESHIPS
+// ══════════════════════════════════════════════
+let currentBS    = null;
+let bsPollTimer  = null;
+let bsOrient     = 'H'; // H or V
+let bsShipIndex  = 0;   // which ship we're placing next
+
+const BS_SIZE  = 8;
+const BS_SHIPS = [
+  { name:'Carrier',    size:4, emoji:'🚢' },
+  { name:'Cruiser',    size:3, emoji:'⛵' },
+  { name:'Destroyer',  size:2, emoji:'🛥️' },
+  { name:'Patrol',     size:2, emoji:'🚤' },
+];
+
+let bsPendingShips = []; // ships placed so far during placement
+
+function bsCells(row, col, size, orient) {
+  const cells = [];
+  for(let i = 0; i < size; i++) {
+    cells.push(orient === 'H' ? [row, col+i] : [row+i, col]);
+  }
+  return cells;
+}
+
+function bsValid(cells, existing) {
+  for(const [r,c] of cells) {
+    if(r < 0 || r >= BS_SIZE || c < 0 || c >= BS_SIZE) return false;
+    for(const ship of existing) {
+      for(const [sr,sc] of ship) {
+        if(sr === r && sc === c) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function bsIsHit(shots, row, col) {
+  return shots.some(([r,c]) => r === row && c === col);
+}
+
+function bsShipAt(ships, row, col) {
+  for(const ship of ships) {
+    if(ship.some(([r,c]) => r === row && c === col)) return ship;
+  }
+  return null;
+}
+
+function bsIsSunk(ship, shots) {
+  return ship.every(([r,c]) => bsIsHit(shots, r, c));
+}
+
+function bsAllSunk(ships, shots) {
+  return ships.every(ship => bsIsSunk(ship, shots));
+}
+
+function bsToggleOrient() {
+  bsOrient = bsOrient === 'H' ? 'V' : 'H';
+  const btn = document.getElementById('bsOrientBtn');
+  if(btn) btn.textContent = bsOrient === 'H' ? '↔ Horizontal' : '↕ Vertical';
+  renderBSPlaceGrid();
+}
+
+function renderBSShipsRemaining() {
+  const el = document.getElementById('bsShipsRemaining');
+  if(!el) return;
+  if(bsShipIndex >= BS_SHIPS.length) {
+    el.textContent = 'All ships placed!';
+    return;
+  }
+  const s = BS_SHIPS[bsShipIndex];
+  el.textContent = `Place: ${s.emoji} ${s.name} (${s.size})`;
+}
+
+function renderBSPlaceGrid() {
+  const grid = document.getElementById('bsPlaceGrid');
+  if(!grid) return;
+  let html = '';
+  for(let r = 0; r < BS_SIZE; r++) {
+    for(let c = 0; c < BS_SIZE; c++) {
+      const hasShip = bsShipAt(bsPendingShips, r, c);
+      html += `<div class="bs-cell${hasShip?' ship':''}" onclick="bsPlaceShip(${r},${c})"></div>`;
+    }
+  }
+  grid.innerHTML = html;
+}
+
+function bsPlaceShip(row, col) {
+  if(bsShipIndex >= BS_SHIPS.length) return;
+  const ship = BS_SHIPS[bsShipIndex];
+  const cells = bsCells(row, col, ship.size, bsOrient);
+  if(!bsValid(cells, bsPendingShips)) {
+    showToast('Invalid placement!');
+    return;
+  }
+  bsPendingShips.push(cells);
+  bsShipIndex++;
+  renderBSPlaceGrid();
+  renderBSShipsRemaining();
+  const readyBtn = document.getElementById('bsReadyBtn');
+  if(bsShipIndex >= BS_SHIPS.length && readyBtn) readyBtn.style.display = 'block';
+}
+
+async function bsConfirmPlacement() {
+  if(bsPendingShips.length < BS_SHIPS.length) { showToast('Place all ships first!'); return; }
+  const isX   = currentBS.mySymbol === 'X';
+  const myKey = isX ? 'x' : 'o';
+  const state = JSON.parse(JSON.stringify(currentBS.state));
+  state[myKey+'_ships']  = bsPendingShips;
+  state[myKey+'_placed'] = true;
+  currentBS.state = state;
+
+  const bothPlaced = state.x_placed && state.o_placed;
+  const readyBtn   = document.getElementById('bsReadyBtn');
+  if(readyBtn) { readyBtn.disabled = true; readyBtn.textContent = 'Waiting for opponent…'; }
+  document.getElementById('bsPhaseLabel').textContent = bothPlaced ? 'Battle time! 💥' : 'Waiting for opponent to place ships…';
+
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentBS.id}`, {
+      method:'PATCH', headers: db._headers(),
+      body: JSON.stringify({
+        board: JSON.stringify(state),
+        current_turn: currentBS.oppId,
+        ...(bothPlaced ? { status:'active' } : {})
+      })
+    });
+    if(bothPlaced) {
+      document.getElementById('bsPlacementScreen').style.display = 'none';
+      document.getElementById('bsBattleScreen').style.display = 'block';
+      renderBSBattleGrids(state);
+    }
+    fetch(`${db.url}/functions/v1/notify-game`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+      body: JSON.stringify({ from_name:currentUser.name, from_avatar:currentUser.avatar, to_id:currentBS.oppId, game_id:currentBS.id, game_type:'bs', is_turn:bothPlaced })
+    }).catch(()=>{});
+  } catch(e) { showToast('Save failed, try again'); }
+}
+
+function renderBSBattleGrids(state) {
+  const isX     = currentBS.mySymbol === 'X';
+  const myKey   = isX ? 'x' : 'o';
+  const oppKey  = isX ? 'o' : 'x';
+  const myShips = state[myKey+'_ships']  || [];
+  const oppShips= state[oppKey+'_ships'] || [];
+  const myShots = state[myKey+'_shots']  || [];
+  const oppShots= state[oppKey+'_shots'] || [];
+  const canFire = currentBS.myTurn && currentBS.status === 'active';
+
+  // Fire grid — enemy waters (tap to fire)
+  const fireGrid = document.getElementById('bsFireGrid');
+  if(fireGrid) {
+    let html = '';
+    for(let r = 0; r < BS_SIZE; r++) {
+      for(let c = 0; c < BS_SIZE; c++) {
+        const shot  = bsIsHit(myShots, r, c);
+        const hit   = shot && bsShipAt(oppShips, r, c);
+        const miss  = shot && !hit;
+        const sunk  = hit && bsIsSunk(bsShipAt(oppShips, r, c), myShots);
+        const cls   = sunk ? 'sunk' : hit ? 'hit' : miss ? 'miss' : '';
+        const icon  = sunk ? '💥' : hit ? '🔥' : miss ? '〇' : '';
+        html += `<div class="bs-cell${cls?' '+cls:''}"
+          ${canFire && !shot ? `onclick="bsFire(${r},${c})"` : ''}>${icon}</div>`;
+      }
+    }
+    fireGrid.innerHTML = html;
+  }
+
+  // Fleet grid — my ships + opponent's shots
+  const fleetGrid = document.getElementById('bsFleetGrid');
+  if(fleetGrid) {
+    let html = '';
+    for(let r = 0; r < BS_SIZE; r++) {
+      for(let c = 0; c < BS_SIZE; c++) {
+        const myShip  = bsShipAt(myShips, r, c);
+        const gotHit  = bsIsHit(oppShots, r, c);
+        const isSunk  = myShip && bsIsSunk(myShip, oppShots);
+        const cls     = isSunk ? 'sunk' : gotHit && myShip ? 'hit' : gotHit ? 'miss' : myShip ? 'ship' : '';
+        const icon    = isSunk ? '💥' : gotHit && myShip ? '🔥' : gotHit ? '〇' : '';
+        html += `<div class="bs-cell${cls?' '+cls:''}">${icon}</div>`;
+      }
+    }
+    fleetGrid.innerHTML = html;
+  }
+
+  // Turn label
+  const phase = document.getElementById('bsPhaseLabel');
+  if(phase) {
+    if(bsAllSunk(oppShips, myShots)) {
+      phase.textContent = 'You sunk their fleet! 🎉';
+    } else if(bsAllSunk(myShips, oppShots)) {
+      phase.textContent = 'Your fleet is gone 💀';
+    } else {
+      phase.textContent = canFire ? 'Your turn — fire! 🎯' : `Waiting for ${MEMBERS.find(m=>m.id===currentBS.oppId)?.name}…`;
+    }
+  }
+}
+
+async function bsFire(row, col) {
+  if(!currentBS || !currentBS.myTurn) return;
+  const isX   = currentBS.mySymbol === 'X';
+  const myKey = isX ? 'x' : 'o';
+  const oppKey= isX ? 'o' : 'x';
+  const state = JSON.parse(JSON.stringify(currentBS.state));
+
+  if(!state[myKey+'_shots']) state[myKey+'_shots'] = [];
+  if(bsIsHit(state[myKey+'_shots'], row, col)) return; // already fired here
+
+  state[myKey+'_shots'].push([row, col]);
+  currentBS.state   = state;
+  currentBS.myTurn  = false;
+
+  const oppShips   = state[oppKey+'_ships'] || [];
+  const finished   = bsAllSunk(oppShips, state[myKey+'_shots']);
+  const opp        = MEMBERS.find(m => m.id === currentBS.oppId);
+
+  renderBSBattleGrids(state);
+
+  if(finished) {
+    currentBS.status = 'finished';
+    showOutcome('bs', 'win', opp?.name || 'Opponent');
+  }
+
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentBS.id}`, {
+      method:'PATCH', headers: db._headers(),
+      body: JSON.stringify({
+        board: JSON.stringify(state),
+        current_turn: currentBS.oppId,
+        ...(finished ? { status:'finished', winner: currentUser.id } : {})
+      })
+    });
+    if(!finished) {
+      fetch(`${db.url}/functions/v1/notify-game`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+        body: JSON.stringify({ from_name:currentUser.name, from_avatar:currentUser.avatar, to_id:currentBS.oppId, game_id:currentBS.id, game_type:'bs', is_turn:true })
+      }).catch(()=>{});
+    }
+  } catch(e) { console.warn('BS fire save failed'); }
+}
+
+function pollBS(opp) {
+  clearInterval(bsPollTimer);
+  bsPollTimer = setInterval(async () => {
+    if(!currentBS) { clearInterval(bsPollTimer); return; }
+    if(!document.getElementById('bsModal').classList.contains('open')) { clearInterval(bsPollTimer); return; }
+    try {
+      const res = await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentBS.id}`, { headers: db._headers() });
+      const [g] = await res.json();
+      if(!g) return;
+      const newState = JSON.parse(g.board);
+      if(JSON.stringify(newState) !== JSON.stringify(currentBS.state)) {
+        currentBS.state  = newState;
+        currentBS.myTurn = g.current_turn === currentUser.id;
+        currentBS.status = g.status;
+
+        const isX   = currentBS.mySymbol === 'X';
+        const myKey = isX ? 'x' : 'o';
+
+        // Check if we're still in placement phase
+        if(!newState[myKey+'_placed']) {
+          // Still placing — do nothing
+        } else if(!newState.x_placed || !newState.o_placed) {
+          // Opponent just placed — update UI
+          document.getElementById('bsPhaseLabel').textContent = 'Waiting for opponent to place ships…';
+        } else {
+          // Both placed — switch to battle
+          document.getElementById('bsPlacementScreen').style.display = 'none';
+          document.getElementById('bsBattleScreen').style.display = 'block';
+          renderBSBattleGrids(newState);
+        }
+
+        if(g.status === 'finished') {
+          clearInterval(bsPollTimer);
+          const won = g.winner === currentUser.id;
+          renderBSBattleGrids(newState);
+          showOutcome('bs', won ? 'win' : 'lose', opp?.name || 'Opponent');
+        }
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+async function openBS(opp, g) {
+  const modal = document.getElementById('bsModal');
+  document.getElementById('bsVs').textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
+  document.getElementById('bsCloseBtn').textContent = 'Close';
+  const outEl = document.getElementById('bsOutcome'); if(outEl) outEl.style.display = 'none';
+
+  const state = JSON.parse(typeof g.board === 'string' ? g.board : JSON.stringify(g.board));
+  currentBS.state = state;
+
+  const isX   = currentBS.mySymbol === 'X';
+  const myKey = isX ? 'x' : 'o';
+  const iPlaced = state[myKey+'_placed'];
+  const bothPlaced = state.x_placed && state.o_placed;
+
+  if(g.status === 'finished') {
+    // Show final battle state
+    document.getElementById('bsPlacementScreen').style.display = 'none';
+    document.getElementById('bsBattleScreen').style.display = 'block';
+    renderBSBattleGrids(state);
+    const won = g.winner === currentUser.id;
+    showOutcome('bs', won ? 'win' : 'lose', opp.name);
+  } else if(!iPlaced) {
+    // Need to place ships
+    bsPendingShips = [];
+    bsShipIndex    = 0;
+    bsOrient       = 'H';
+    document.getElementById('bsPlacementScreen').style.display = 'block';
+    document.getElementById('bsBattleScreen').style.display = 'none';
+    document.getElementById('bsPhaseLabel').textContent = 'Place your ships ⚓';
+    document.getElementById('bsOrientBtn').textContent = '↔ Horizontal';
+    renderBSPlaceGrid();
+    renderBSShipsRemaining();
+    const readyBtn = document.getElementById('bsReadyBtn');
+    if(readyBtn) { readyBtn.style.display = 'none'; readyBtn.disabled = false; readyBtn.textContent = 'Ready — Set Sail ⚓'; }
+  } else if(!bothPlaced) {
+    // I placed, waiting for opponent
+    document.getElementById('bsPlacementScreen').style.display = 'block';
+    document.getElementById('bsBattleScreen').style.display = 'none';
+    document.getElementById('bsPhaseLabel').textContent = 'Waiting for opponent to place ships…';
+    bsPendingShips = state[myKey+'_ships'] || [];
+    renderBSPlaceGrid();
+    const readyBtn = document.getElementById('bsReadyBtn');
+    if(readyBtn) { readyBtn.disabled = true; readyBtn.style.display = 'block'; readyBtn.textContent = 'Waiting for opponent…'; }
+  } else {
+    // Battle phase
+    document.getElementById('bsPlacementScreen').style.display = 'none';
+    document.getElementById('bsBattleScreen').style.display = 'block';
+    renderBSBattleGrids(state);
+  }
+
+  modal.classList.add('open');
+  if(g.status !== 'finished') pollBS(opp);
+}
+
+function closeBS() {
+  clearInterval(bsPollTimer);
+  document.getElementById('bsModal').classList.remove('open');
+  currentBS = null;
+  renderActiveGames();
+}
+
+// ══════════════════════════════════════════════
+//  21 GAME
+// ══════════════════════════════════════════════
+let currentG21 = null;
+let g21PollTimer = null;
+
+const SUITS = ['♠','♣','♥','♦'];
+const VALS  = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+function g21RandomCard() {
+  return {
+    suit: SUITS[Math.floor(Math.random()*4)],
+    val:  VALS[Math.floor(Math.random()*13)]
+  };
+}
+
+function g21CardValue(card) {
+  if(card.val === 'A') return 11;
+  if(['J','Q','K'].includes(card.val)) return 10;
+  return parseInt(card.val);
+}
+
+function g21HandTotal(cards) {
+  let total = cards.reduce((s,c) => s + g21CardValue(c), 0);
+  let aces  = cards.filter(c => c.val === 'A').length;
+  while(total > 21 && aces > 0) { total -= 10; aces--; }
+  return total;
+}
+
+function g21IsRed(suit) { return suit === '♥' || suit === '♦'; }
+
+function g21RenderCards(cards, elId, hidden) {
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = cards.map((c, i) => {
+    if(hidden && i > 0) return `<div class="g21-card hidden" style="animation-delay:${i*0.08}s">🂠</div>`;
+    return `<div class="g21-card${g21IsRed(c.suit)?' red':''}" style="animation-delay:${i*0.08}s">
+      <span class="g21-card-suit">${c.suit}</span>
+      <span class="g21-card-val">${c.val}</span>
+    </div>`;
+  }).join('');
+}
+
+function g21RenderState(state, opp) {
+  const isX    = currentG21.mySymbol === 'X';
+  const myKey  = isX ? 'x' : 'o';
+  const oppKey = isX ? 'o' : 'x';
+
+  const myCards  = state[myKey+'_cards']  || [];
+  const oppCards = state[oppKey+'_cards'] || [];
+  const myStood  = state[myKey+'_stood']  || false;
+  const oppStood = state[oppKey+'_stood'] || false;
+  const finished = state.finished || false;
+
+  const myTotal  = g21HandTotal(myCards);
+  const oppTotal = g21HandTotal(oppCards);
+  const myBust   = myTotal > 21;
+
+  // Opponent cards — hidden until finished
+  g21RenderCards(oppCards, 'g21OppCards', !finished);
+  const oppTotalEl = document.getElementById('g21OppTotal');
+  if(oppTotalEl) {
+    if(!finished) {
+      oppTotalEl.textContent = oppStood ? 'Standing' : '?';
+      oppTotalEl.className = 'g21-total hidden';
+    } else {
+      oppTotalEl.textContent = oppTotal > 21 ? `${oppTotal} BUST` : oppTotal;
+      oppTotalEl.className = `g21-total${oppTotal>21?' bust':''}`;
+    }
+  }
+
+  // My cards
+  g21RenderCards(myCards, 'g21MyCards', false);
+  const myTotalEl = document.getElementById('g21MyTotal');
+  if(myTotalEl) {
+    myTotalEl.textContent = myBust ? `${myTotal} BUST` : myStood ? `${myTotal} — Standing` : myTotal;
+    myTotalEl.className = `g21-total${myBust?' bust':myStood?' stood':''}`;
+  }
+
+  // Opp label
+  const oppLabel = document.getElementById('g21OppLabel');
+  if(oppLabel) oppLabel.textContent = `${opp?.avatar || ''} ${opp?.name || 'Opponent'}`;
+
+  // Actions
+  const actions = document.getElementById('g21Actions');
+  const turnEl  = document.getElementById('g21Turn');
+  const isMyTurn = currentG21.myTurn;
+
+  if(finished || state.finished) {
+    if(actions) actions.style.display = 'none';
+    if(turnEl) { turnEl.textContent = ''; turnEl.className = 'g21-turn-label'; }
+  } else if(myBust) {
+    if(actions) actions.style.display = 'none';
+    if(turnEl) { turnEl.textContent = 'You busted 💀'; turnEl.className = 'g21-turn-label'; turnEl.style.color = '#ef4444'; }
+  } else if(myStood) {
+    if(actions) actions.style.display = 'none';
+    if(turnEl) { turnEl.textContent = `Waiting for ${opp?.name}…`; turnEl.className = 'ttt-turn waiting'; }
+  } else if(isMyTurn) {
+    if(actions) actions.style.display = 'flex';
+    if(turnEl) { turnEl.textContent = 'Your turn — Hit or Stand?'; turnEl.className = 'ttt-turn'; }
+  } else {
+    if(actions) actions.style.display = 'none';
+    if(turnEl) { turnEl.textContent = `Waiting for ${opp?.name}…`; turnEl.className = 'ttt-turn waiting'; }
+  }
+
+  // Show outcome if finished
+  if(finished) {
+    const oppName = opp?.name || 'Opponent';
+    const myFinal  = myBust  ? -1 : myTotal;
+    const oppFinal = oppTotal > 21 ? -1 : oppTotal;
+    const won  = myFinal > oppFinal;
+    const draw = myFinal === oppFinal;
+    showOutcome('g21', draw?'draw':won?'win':'lose', oppName);
+  }
+}
+
+async function openG21(opp, g) {
+  const modal = document.getElementById('g21Modal');
+  document.getElementById('g21Vs').textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
+
+  // Reset
+  const outEl = document.getElementById('g21Outcome'); if(outEl) outEl.style.display='none';
+  document.getElementById('g21CloseBtn').textContent = 'Close';
+  document.getElementById('g21Actions').style.display = 'none';
+
+  modal.classList.add('open');
+
+  const state = JSON.parse(typeof g.board === 'string' ? g.board : JSON.stringify(g.board));
+  currentG21.state = state;
+
+  g21RenderState(state, opp);
+  if(g.status !== 'finished') pollG21(opp);
+}
+
+async function g21Hit() {
+  if(!currentG21 || !currentG21.myTurn) return;
+  const isX   = currentG21.mySymbol === 'X';
+  const myKey = isX ? 'x' : 'o';
+  const state = JSON.parse(JSON.stringify(currentG21.state));
+
+  const newCard = g21RandomCard();
+  if(!state[myKey+'_cards']) state[myKey+'_cards'] = [];
+  state[myKey+'_cards'].push(newCard);
+
+  const total = g21HandTotal(state[myKey+'_cards']);
+  const bust  = total > 21;
+
+  // If bust, auto-stand
+  if(bust) state[myKey+'_stood'] = true;
+
+  currentG21.state = state;
+
+  // Check if both done
+  const oppKey = isX ? 'o' : 'x';
+  const bothDone = (state[myKey+'_stood'] || bust) && state[oppKey+'_stood'];
+  const finished = bothDone || bust;
+
+  // If finished, determine winner
+  let winner = null;
+  if(finished) {
+    const myTotal  = bust ? -1 : total;
+    const oppTotal = g21HandTotal(state[oppKey+'_cards'] || []);
+    const oppFinal = oppTotal > 21 ? -1 : oppTotal;
+    winner = myTotal === oppFinal ? 'draw' : myTotal > oppFinal ? currentUser.id : currentG21.oppId;
+    state.finished = true;
+  }
+
+  const opp = MEMBERS.find(m => m.id === currentG21.oppId);
+  currentG21.myTurn = !finished && !bust;
+  g21RenderState(state, opp);
+
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentG21.id}`, {
+      method:'PATCH', headers: db._headers(),
+      body: JSON.stringify({
+        board: JSON.stringify(state),
+        current_turn: currentG21.oppId,
+        ...(finished ? { status:'finished', winner } : {})
+      })
+    });
+    if(!finished) {
+      fetch(`${db.url}/functions/v1/notify-game`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+        body: JSON.stringify({ from_name:currentUser.name, from_avatar:currentUser.avatar, to_id:currentG21.oppId, game_id:currentG21.id, game_type:'21', is_turn:true })
+      }).catch(()=>{});
+    }
+  } catch(e) { console.warn('21 save failed:', e); }
+}
+
+async function g21Stand() {
+  if(!currentG21 || !currentG21.myTurn) return;
+  const isX   = currentG21.mySymbol === 'X';
+  const myKey = isX ? 'x' : 'o';
+  const oppKey= isX ? 'o' : 'x';
+  const state = JSON.parse(JSON.stringify(currentG21.state));
+
+  state[myKey+'_stood'] = true;
+  currentG21.state = state;
+  currentG21.myTurn = false;
+
+  const bothDone = state[myKey+'_stood'] && state[oppKey+'_stood'];
+  let winner = null;
+  if(bothDone) {
+    state.finished = true;
+    const myTotal  = g21HandTotal(state[myKey+'_cards']  || []);
+    const oppTotal = g21HandTotal(state[oppKey+'_cards'] || []);
+    const myFinal  = myTotal  > 21 ? -1 : myTotal;
+    const oppFinal = oppTotal > 21 ? -1 : oppTotal;
+    winner = myFinal === oppFinal ? 'draw' : myFinal > oppFinal ? currentUser.id : currentG21.oppId;
+  }
+
+  const opp = MEMBERS.find(m => m.id === currentG21.oppId);
+  g21RenderState(state, opp);
+
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentG21.id}`, {
+      method:'PATCH', headers: db._headers(),
+      body: JSON.stringify({
+        board: JSON.stringify(state),
+        current_turn: currentG21.oppId,
+        ...(bothDone ? { status:'finished', winner } : {})
+      })
+    });
+    if(!bothDone) {
+      fetch(`${db.url}/functions/v1/notify-game`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
+        body: JSON.stringify({ from_name:currentUser.name, from_avatar:currentUser.avatar, to_id:currentG21.oppId, game_id:currentG21.id, game_type:'21', is_turn:true })
+      }).catch(()=>{});
+    }
+  } catch(e) { console.warn('21 stand save failed:', e); }
+}
+
+function pollG21(opp) {
+  clearInterval(g21PollTimer);
+  g21PollTimer = setInterval(async () => {
+    if(!currentG21) { clearInterval(g21PollTimer); return; }
+    if(!document.getElementById('g21Modal').classList.contains('open')) { clearInterval(g21PollTimer); return; }
+    try {
+      const res = await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentG21.id}`, { headers: db._headers() });
+      const [g] = await res.json();
+      if(!g) return;
+      const newState = JSON.parse(g.board);
+      if(JSON.stringify(newState) !== JSON.stringify(currentG21.state)) {
+        currentG21.state  = newState;
+        currentG21.myTurn = g.current_turn === currentUser.id;
+        currentG21.status = g.status;
+        g21RenderState(newState, opp);
+        if(g.status === 'finished') clearInterval(g21PollTimer);
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+function closeG21() {
+  clearInterval(g21PollTimer);
+  document.getElementById('g21Modal').classList.remove('open');
+  currentG21 = null;
   renderActiveGames();
 }
 
