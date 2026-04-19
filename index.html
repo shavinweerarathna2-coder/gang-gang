@@ -1782,13 +1782,13 @@ body.compact-mode .gang-rank-list { gap:0; }
   border:1px solid rgba(147,197,253,.2);
 }
 .game-card.bs-card:active { transform:scale(.96); }
-/* 21 card — electric teal */
+/* Black Jack card — orange */
 .game-card.g21-card {
-  background:linear-gradient(135deg,#0c4a6e 0%,#0369a1 50%,#0ea5e9 100%);
-  box-shadow:0 6px 24px rgba(14,165,233,.4);
-  border:1px solid rgba(125,211,252,.25);
+  background:linear-gradient(135deg,#7c2d00 0%,#c2410c 50%,#f97316 100%);
+  box-shadow:0 6px 24px rgba(249,115,22,.4);
+  border:1px solid rgba(253,186,116,.25);
 }
-.game-card.g21-card:active { transform:scale(.96); }
+.game-card.g21-card:active { transform:scale(.96); box-shadow:0 2px 10px rgba(249,115,22,.3); }
 /* Connect 4 card — electric red */
 .game-card.c4-card {
   background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 50%,#ef4444 100%);
@@ -2002,6 +2002,45 @@ body.compact-mode .gang-rank-list { gap:0; }
 
 
 
+
+
+/* ════════════════
+   GAME INFO SHEET
+════════════════ */
+.gi-icon {
+  font-size:52px; text-align:center; margin-bottom:8px;
+  filter:drop-shadow(0 4px 12px rgba(255,255,255,.2));
+}
+.gi-name {
+  font-family:'Baloo 2',sans-serif; font-size:24px; font-weight:800;
+  color:var(--text); text-align:center; margin-bottom:16px;
+}
+.gi-aim-label {
+  font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--text-dim); font-weight:700; margin-bottom:8px;
+}
+.gi-aim {
+  font-family:'Baloo 2',sans-serif; font-size:16px; font-weight:700;
+  color:var(--text); margin-bottom:14px; line-height:1.4;
+}
+.gi-rules {
+  display:flex; flex-direction:column; gap:8px; margin-bottom:20px;
+}
+.gi-rule {
+  display:flex; gap:10px; align-items:flex-start;
+  background:var(--bg2); border-radius:12px; padding:10px 12px;
+  border:1px solid var(--border);
+}
+.gi-rule-icon { font-size:18px; flex-shrink:0; }
+.gi-rule-text { font-size:13px; color:var(--text-muted); line-height:1.5; }
+.gi-play-btn {
+  width:100%; padding:15px; border:none; border-radius:16px; cursor:pointer;
+  font-family:'Baloo 2',sans-serif; font-size:16px; font-weight:800;
+  background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
+  color:#fff; box-shadow:0 4px 18px rgba(255,0,128,.3);
+  -webkit-tap-highlight-color:transparent; transition:all .18s;
+}
+.gi-play-btn:active { transform:scale(.97); }
 
 /* ════════════════
    ANGIE BOT
@@ -2337,7 +2376,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   display:flex; gap:7px; justify-content:center; flex-wrap:wrap;
   margin-bottom:6px;
 }
-.g21-card {
+.g21-playcard {
   width:46px; height:64px; border-radius:8px;
   background:#fff; color:#111; font-size:13px; font-weight:800;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -2345,13 +2384,13 @@ body.compact-mode .gang-rank-list { gap:0; }
   animation:cardDeal .3s cubic-bezier(.175,.885,.32,1.275) both;
   flex-shrink:0;
 }
-.g21-card.red { color:#dc2626; }
-.g21-card.hidden {
+.g21-playcard.red { color:#dc2626; }
+.g21-playcard.hidden {
   background:linear-gradient(135deg,#1e40af,#3b82f6);
   color:rgba(255,255,255,.6); font-size:22px;
 }
-.g21-card-suit { font-size:16px; line-height:1; }
-.g21-card-val  { font-size:12px; font-weight:800; line-height:1; }
+.g21-playcard-suit { font-size:16px; line-height:1; }
+.g21-playcard-val  { font-size:12px; font-weight:800; line-height:1; }
 .g21-total {
   font-family:'Baloo 2',sans-serif; font-size:22px; font-weight:800;
   color:#fff; line-height:1;
@@ -2364,7 +2403,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   margin:8px 0; position:relative; z-index:1;
 }
 .g21-actions {
-  display:flex; gap:10px; position:relative; z-index:1; margin-top:12px;
+  display:flex; gap:10px; position:relative; z-index:1; margin-top:12px; margin-bottom:16px;
 }
 .g21-btn {
   flex:1; padding:14px; border:none; border-radius:16px; cursor:pointer;
@@ -3573,6 +3612,18 @@ syncHtmlBg('loading');
 </div>
 
 
+
+<!-- ════ GAME INFO SHEET ════ -->
+<div class="bottom-sheet" id="gameInfoSheet">
+  <div class="sheet-handle"></div>
+  <div class="gi-icon" id="giIcon"></div>
+  <div class="gi-name" id="giName"></div>
+  <div class="gi-aim-label">🎯 Aim of the game</div>
+  <div class="gi-aim" id="giAim"></div>
+  <div class="gi-rules" id="giRules"></div>
+  <button class="gi-play-btn" id="giPlayBtn" onclick="giProceed()">Challenge someone →</button>
+</div>
+
 <!-- ════ ANGIE BOT SHEET ════ -->
 <div class="bottom-sheet" id="angieBotSheet" style="height:72vh;max-height:72vh;overflow:hidden;display:flex;flex-direction:column">
   <div class="sheet-handle"></div>
@@ -3947,39 +3998,35 @@ syncHtmlBg('loading');
       <!-- Game picker -->
       <div class="games-pick-label">Choose your game</div>
       <div class="games-grid">
-        <div class="game-card ttt-card" onclick="startGameFlow('ttt')">
+        <div class="game-card ttt-card" onclick="showGameInfo('ttt')">
           <div class="game-card-icon">⭕</div>
           <div class="game-card-name">Noughts &amp; Crosses</div>
           <div class="game-card-desc">Classic 3×3 battle</div>
           <div class="game-card-play">Play now</div>
         </div>
-        <div class="game-card c4-card" onclick="startGameFlow('c4')">
+        <div class="game-card c4-card" onclick="showGameInfo('c4')">
           <div class="game-card-icon">🔴</div>
           <div class="game-card-name">Connect 4</div>
           <div class="game-card-desc">Drop 4 in a row</div>
           <div class="game-card-play">Play now</div>
         </div>
-        <div class="game-card rps-card" onclick="startGameFlow('rps')">
+        <div class="game-card rps-card" onclick="showGameInfo('rps')">
           <div class="game-card-icon">✊</div>
           <div class="game-card-name">Rock Paper Scissors</div>
           <div class="game-card-desc">Best of 3 rounds</div>
           <div class="game-card-play">Play now</div>
         </div>
-        <div class="game-card g21-card" onclick="startGameFlow('21')">
-          <div class="game-card-icon">🃏</div>
-          <div class="game-card-name">21</div>
-          <div class="game-card-desc">Hit or stand — closest wins</div>
+        <div class="game-card bs-card" onclick="showGameInfo('bs')">
+          <div class="game-card-icon">🚢</div>
+          <div class="game-card-name">Battleships</div>
+          <div class="game-card-desc">Sink the fleet</div>
           <div class="game-card-play">Play now</div>
         </div>
-        <div class="game-card coming-soon">
-          <div class="game-card-icon">🃏</div>
-          <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">Shuffle and deal</div>
-        </div>
-        <div class="game-card coming-soon">
-          <div class="game-card-icon">🎯</div>
-          <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">Aim and fire</div>
+        <div class="game-card g21-card" onclick="showGameInfo('21')">
+          <div class="game-card-icon">🎴</div>
+          <div class="game-card-name">Black Jack</div>
+          <div class="game-card-desc">Hit or stand — closest wins</div>
+          <div class="game-card-play">Play now</div>
         </div>
         <div class="game-card coming-soon">
           <div class="game-card-icon">🧩</div>
@@ -3987,9 +4034,14 @@ syncHtmlBg('loading');
           <div class="game-card-desc">Piece it together</div>
         </div>
         <div class="game-card coming-soon">
-          <div class="game-card-icon">⚡</div>
+          <div class="game-card-icon">🎲</div>
           <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">Lightning fast</div>
+          <div class="game-card-desc">Roll the dice</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🏆</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">For the glory</div>
         </div>
 
       </div>
@@ -6351,7 +6403,7 @@ async function createGame(type, oppId) {
         type,
         player_x: currentUser.id,
         player_o: oppId,
-        board: type==='c4' ? JSON.stringify(Array(42).fill('')) : type==='rps' ? JSON.stringify({rounds:[],current:{x:null,o:null}}) : type==='bs' ? JSON.stringify({x_ships:[],o_ships:[],x_shots:[],o_shots:[],x_placed:false,o_placed:false}) : type==='21' ? JSON.stringify({x_cards:[{suit:'♠',val:VALS[Math.floor(Math.random()*13)]},{suit:['♠','♣','♥','♦'][Math.floor(Math.random()*4)],val:VALS[Math.floor(Math.random()*13)]}],o_cards:[{suit:'♥',val:VALS[Math.floor(Math.random()*13)]},{suit:['♠','♣','♥','♦'][Math.floor(Math.random()*4)],val:VALS[Math.floor(Math.random()*13)]}],x_stood:false,o_stood:false,finished:false}) : JSON.stringify(Array(9).fill('')),
+        board: type==='c4' ? JSON.stringify(Array(42).fill('')) : type==='rps' ? JSON.stringify({rounds:[],current:{x:null,o:null}}) : type==='bs' ? JSON.stringify({x_ships:[],o_ships:[],x_shots:[],o_shots:[],x_placed:false,o_placed:false}) : type==='21' ? (()=>{ const S=['♠','♣','♥','♦']; const V=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; const cv=v=>v==='A'?11:['J','Q','K'].includes(v)?10:parseInt(v); const deal=()=>{let cards,total;do{cards=[{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]},{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]}];total=cards.reduce((s,c)=>s+cv(c.val),0);let a=cards.filter(c=>c.val==='A').length;while(total>21&&a>0){total-=10;a--;}}while(total>=17);return cards;}; return JSON.stringify({x_cards:deal(),o_cards:deal(),x_stood:false,o_stood:false,finished:false});})() : JSON.stringify(Array(9).fill('')),
         current_turn: currentUser.id,
         status: 'pending',
         winner: null,
@@ -7093,6 +7145,81 @@ function closeC4() {
 
 
 
+
+// ══════════════════════════════════════════════
+//  GAME INFO
+// ══════════════════════════════════════════════
+const GAME_INFO = {
+  ttt: {
+    icon: '⭕', name: 'Noughts & Crosses',
+    aim: 'Get 3 of your symbols in a row before your opponent does.',
+    rules: [
+      { icon:'🎮', text:'Take turns placing your symbol on a 3×3 grid.' },
+      { icon:'➡️', text:'Win by getting 3 in a row — horizontal, vertical, or diagonal.' },
+      { icon:'🤝', text:'If all 9 squares are filled with no winner, it is a draw.' },
+    ]
+  },
+  c4: {
+    icon: '🔴', name: 'Connect 4',
+    aim: 'Be the first to connect 4 of your pieces in a row.',
+    rules: [
+      { icon:'🎮', text:'Take turns dropping a piece into one of 7 columns on a 6×7 grid.' },
+      { icon:'⬇️', text:'Pieces fall to the lowest empty space in the column — gravity applies.' },
+      { icon:'➡️', text:'Win by connecting 4 in a row — horizontal, vertical, or diagonal.' },
+    ]
+  },
+  rps: {
+    icon: '✊', name: 'Rock Paper Scissors',
+    aim: 'Win 2 out of 3 rounds to claim victory.',
+    rules: [
+      { icon:'🤫', text:'Both players pick simultaneously — your choice is hidden until the opponent picks too.' },
+      { icon:'📄', text:'Rock beats Scissors · Scissors beats Paper · Paper beats Rock.' },
+      { icon:'🏆', text:'First to win 2 rounds wins the game. A draw round doesn\'t count.' },
+    ]
+  },
+  '21': {
+    icon: '🃏', name: 'Black Jack',
+    aim: 'Get closer to 21 than your opponent without going over.',
+    rules: [
+      { icon:'🃏', text:'You both start with 2 cards. Hit to draw another card, Stand to lock your score.' },
+      { icon:'💀', text:'Go over 21 and you bust — instant loss regardless of your opponent\'s score.' },
+      { icon:'🏆', text:'When both players stand, highest score wins. Aces count as 11 or 1 to avoid busting.' },
+    ]
+  },
+  bs: {
+    icon: '🚢', name: 'Battleships',
+    aim: 'Sink all of your opponent\'s ships before they sink yours.',
+    rules: [
+      { icon:'⚓', text:'First place your 4 ships secretly on an 8×8 grid. Your opponent cannot see them.' },
+      { icon:'🎯', text:'Take turns firing at squares on the enemy grid. Hit or Miss.' },
+      { icon:'💥', text:'Sink all 4 of their ships to win. A ship is sunk when every part of it is hit.' },
+    ]
+  },
+};
+
+let pendingGameInfoType = null;
+
+function showGameInfo(type) {
+  const info = GAME_INFO[type];
+  if(!info) { startGameFlow(type); return; }
+  pendingGameInfoType = type;
+  document.getElementById('giIcon').textContent = info.icon;
+  document.getElementById('giName').textContent = info.name;
+  document.getElementById('giAim').textContent  = info.aim;
+  document.getElementById('giRules').innerHTML  = info.rules.map(r =>
+    `<div class="gi-rule">
+      <span class="gi-rule-icon">${r.icon}</span>
+      <span class="gi-rule-text">${r.text}</span>
+    </div>`
+  ).join('');
+  openSheet('gameInfoSheet');
+}
+
+function giProceed() {
+  closeAllSheets();
+  if(pendingGameInfoType) startGameFlow(pendingGameInfoType);
+}
+
 // ══════════════════════════════════════════════
 //  BATTLESHIPS
 // ══════════════════════════════════════════════
@@ -7474,10 +7601,10 @@ function g21RenderCards(cards, elId, hidden) {
   const el = document.getElementById(elId);
   if(!el) return;
   el.innerHTML = cards.map((c, i) => {
-    if(hidden && i > 0) return `<div class="g21-card hidden" style="animation-delay:${i*0.08}s">🂠</div>`;
-    return `<div class="g21-card${g21IsRed(c.suit)?' red':''}" style="animation-delay:${i*0.08}s">
-      <span class="g21-card-suit">${c.suit}</span>
-      <span class="g21-card-val">${c.val}</span>
+    if(hidden && i > 0) return `<div class="g21-playcard hidden" style="animation-delay:${i*0.08}s">🂠</div>`;
+    return `<div class="g21-playcard${g21IsRed(c.suit)?' red':''}" style="animation-delay:${i*0.08}s">
+      <span class="g21-playcard-suit">${c.suit}</span>
+      <span class="g21-playcard-val">${c.val}</span>
     </div>`;
   }).join('');
 }
@@ -8097,7 +8224,7 @@ let cookedPokeType  = null; // index into ANGIE_POKES — nothing pre-selected
 const ANGIE_POKES = [
   { label:'😮‍💨 You are cooked',   body:'You are cooked 😮‍💨' },
   { label:'👀 I can see you',      body:'I can see you 👀' },
-  { label:'🚗 On my way',          body:'On my way 🚗 you better be ready' },
+  { label:'🎮 Good Game',           body:'Good Game 🎮' },
   { label:'🔔 Wake up',            body:'WAKE UP 🔔' },
   { label:'🤨 Really?',            body:'Really? REALLY? 🤨' },
   { label:"😈 You are a gooner", body:"You are a gooner 😈" },
