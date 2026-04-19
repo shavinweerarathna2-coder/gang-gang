@@ -1761,7 +1761,7 @@ body.compact-mode .gang-rank-list { gap:0; }
 
 /* Game cards grid */
 .games-grid {
-  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:22px;
+  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;
 }
 .game-card {
   position:relative; overflow:hidden;
@@ -2119,6 +2119,21 @@ body.compact-mode .gang-rank-list { gap:0; }
 }
 .ab-bubble-bot  .ab-timestamp { align-self:flex-start; }
 .ab-bubble-user .ab-timestamp { align-self:flex-end; }
+.ab-suggestions {
+  display:flex; gap:8px; padding:10px 14px; overflow-x:auto;
+  scrollbar-width:none; flex-shrink:0; background:var(--bg2);
+  border-top:1px solid var(--border);
+}
+.ab-suggestions::-webkit-scrollbar { display:none; }
+.ab-sug-btn {
+  white-space:nowrap; flex-shrink:0;
+  padding:9px 16px; border-radius:100px; cursor:pointer;
+  background:var(--bg3); border:1.5px solid var(--border);
+  color:var(--text-muted); font-size:13px; font-weight:600;
+  font-family:'Nunito',sans-serif; transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.ab-sug-btn:active { background:rgba(168,85,247,.2); border-color:rgba(168,85,247,.5); color:var(--text); }
 .ab-input-wrap {
   display:flex; gap:8px; align-items:flex-end;
   padding:10px 12px 14px; border-top:1px solid var(--border);
@@ -2292,18 +2307,32 @@ body.compact-mode .gang-rank-list { gap:0; }
   font-size:13px; font-weight:700; color:rgba(255,255,255,.6);
   margin-top:3px; animation:turnPulse 1.5s ease-in-out infinite;
 }
+.bs-place-hint {
+  text-align:center; font-size:12px; color:rgba(255,255,255,.5); font-weight:600;
+  margin-bottom:10px; position:relative; z-index:1; letter-spacing:.05em;
+}
 .bs-orient-row {
-  display:flex; align-items:center; gap:10px; margin-bottom:10px;
+  display:flex; align-items:center; gap:8px; margin-bottom:8px;
   position:relative; z-index:1;
 }
 .bs-orient-btn {
-  padding:8px 14px; border-radius:100px; border:1.5px solid rgba(29,78,216,.6);
-  background:rgba(29,78,216,.2); color:#93c5fd; font-size:13px; font-weight:700;
+  flex:1; padding:10px 14px; border-radius:12px;
+  border:2px solid rgba(29,78,216,.7);
+  background:rgba(29,78,216,.25); color:#93c5fd; font-size:14px; font-weight:800;
   cursor:pointer; -webkit-tap-highlight-color:transparent; transition:all .15s;
+  font-family:'Baloo 2',sans-serif; text-align:center;
 }
-.bs-orient-btn:active { background:rgba(29,78,216,.4); }
+.bs-orient-btn:active { background:rgba(29,78,216,.5); transform:scale(.97); }
+.bs-reset-btn {
+  padding:10px 14px; border-radius:12px; border:1.5px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.07); color:rgba(255,255,255,.6); font-size:13px;
+  font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:all .15s;
+  flex-shrink:0;
+}
+.bs-reset-btn:active { background:rgba(255,255,255,.15); transform:scale(.97); }
 .bs-ships-remaining {
-  font-size:12px; color:rgba(255,255,255,.5); font-weight:600; flex:1; text-align:right;
+  font-size:13px; color:rgba(255,255,255,.8); font-weight:700;
+  margin-bottom:8px; text-align:center; position:relative; z-index:1;
 }
 .bs-grid {
   display:grid; grid-template-columns:repeat(8,1fr);
@@ -2332,7 +2361,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   text-align:center; position:relative; z-index:1;
 }
 .bs-fleet-label { margin-top:8px; }
-.bs-ready-btn { margin-top:8px; background:linear-gradient(135deg,#1d4ed8,#3b82f6) !important; color:#fff !important; }
+.bs-ready-btn { margin-top:10px; margin-bottom:18px; background:linear-gradient(135deg,#1d4ed8,#3b82f6) !important; color:#fff !important; }
 
 /* ════════════════
    21 GAME
@@ -3489,10 +3518,14 @@ syncHtmlBg('loading');
 
     <!-- PLACEMENT SCREEN -->
     <div id="bsPlacementScreen">
+      <div class="bs-place-hint">Tap the grid to place your ship</div>
       <div class="bs-orient-row">
-        <button class="bs-orient-btn" id="bsOrientBtn" onclick="bsToggleOrient()">↔ Horizontal</button>
-        <div class="bs-ships-remaining" id="bsShipsRemaining"></div>
+        <button class="bs-orient-btn" id="bsOrientBtn" onclick="bsToggleOrient()">
+          <span id="bsOrientIcon">↔️</span> <span id="bsOrientText">Tap to rotate</span>
+        </button>
+        <button class="bs-reset-btn" onclick="bsResetPlacement()">↺ Reset</button>
       </div>
+      <div class="bs-ships-remaining" id="bsShipsRemaining"></div>
       <div class="bs-grid" id="bsPlaceGrid"></div>
       <button class="ttt-close-btn bs-ready-btn" id="bsReadyBtn" onclick="bsConfirmPlacement()" style="display:none">
         Ready — Set Sail ⚓
@@ -3644,6 +3677,7 @@ syncHtmlBg('loading');
     </div>
   </div>
   <!-- Input -->
+  <div class="ab-suggestions" id="abSuggestions"></div>
   <div class="ab-input-wrap">
     <textarea class="ab-input" id="abInput" rows="1" placeholder="say something..."
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
@@ -4023,7 +4057,7 @@ syncHtmlBg('loading');
           <div class="game-card-play">Play now</div>
         </div>
         <div class="game-card g21-card" onclick="showGameInfo('21')">
-          <div class="game-card-icon">🎴</div>
+          <div class="game-card-icon">🃏</div>
           <div class="game-card-name">Black Jack</div>
           <div class="game-card-desc">Hit or stand — closest wins</div>
           <div class="game-card-play">Play now</div>
@@ -4032,16 +4066,6 @@ syncHtmlBg('loading');
           <div class="game-card-icon">🧩</div>
           <div class="game-card-name">Coming Soon</div>
           <div class="game-card-desc">Piece it together</div>
-        </div>
-        <div class="game-card coming-soon">
-          <div class="game-card-icon">🎲</div>
-          <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">Roll the dice</div>
-        </div>
-        <div class="game-card coming-soon">
-          <div class="game-card-icon">🏆</div>
-          <div class="game-card-name">Coming Soon</div>
-          <div class="game-card-desc">For the glory</div>
         </div>
 
       </div>
@@ -6730,11 +6754,14 @@ const AB_SYSTEM_PROMPT = `You are Angie Bot — the alter ego of Angelo, a guy w
 
 STRICT RULES:
 - Max 2 sentences per reply. Always.
-- Lowercase mostly. Casual.
-- Never give advice unless they specifically ask, and even then make it reluctant
-- Never be wholesome or overly kind — that's not you
-- If someone says something boring, call it out
-- Do not repeat yourself across messages
+- Write like a real person texting. Casual, lowercase, no punctuation unless needed.
+- NEVER use em dashes (—) or hyphens to connect thoughts. Just write naturally.
+- No AI phrases like "certainly", "of course", "I understand", "great question", "I'd be happy to".
+- Never give advice unless they specifically ask, and even then make it reluctant.
+- Never be wholesome or overly kind — that is not you.
+- If someone says something boring, call it out.
+- Do not repeat yourself across messages.
+- Sound like a real person who texts in lowercase, not a chatbot.
 
 How you talk to each person — stick to this exactly:
 
@@ -6752,24 +6779,24 @@ function openAngieBot() {
   openSheet('angieBotSheet');
   setTimeout(() => {
     const msgs = document.getElementById('abMessages');
-    // Set personalised greeting based on current user
-    const greetings = {
-      vihara:     `oh it's you again 🙄 what is it now`,
-      bigd:       `bro 😭 you actually opened this. good boy 🐶 what do you need`,
-      yasi:       `bro you came to chat with a bot. a BOT. anyway what's up 🐶`,
-      nini:       `oh mate 🤓 you're here. what do you want mate 🦖`,
-      sanjibanji: `the clown has arrived 🤡 you're already cooked and you haven't even said anything yet 😮‍💨`,
-      angie:      `oh brilliant. the guy who BUILT me is now talking to me. truly your most embarrassing creation. what do you want`,
-    };
-    const greeting = currentUser ? (greetings[currentUser.id] || 'oh great, another one 🙄 what do you want') : 'oh great, another one 🙄 what do you want';
-    if(msgs) {
+    // Only set greeting if chat is empty (first open or after clear)
+    if(msgs && msgs.children.length === 0) {
+      const greetings = {
+        vihara:     `oh it's you again 🙄 what is it now`,
+        bigd:       `bro 😭 you actually opened this. good boy 🐶 what do you need`,
+        yasi:       `bro you came to chat with a bot. a BOT. anyway what's up 🐶`,
+        nini:       `oh mate 🤓 you're here. what do you want mate 🦖`,
+        sanjibanji: `the clown has arrived 🤡 you're already cooked and you haven't even said anything yet 😮‍💨`,
+        angie:      `oh brilliant. the guy who BUILT me is now talking to me. truly your most embarrassing creation. what do you want`,
+      };
+      const greeting = currentUser ? (greetings[currentUser.id] || 'oh great, another one 🙄 what do you want') : 'oh great, another one 🙄 what do you want';
       msgs.innerHTML = `<div class="ab-bubble ab-bubble-bot">
         <span class="ab-bubble-text">${greeting}</span>
         <span class="ab-timestamp">now</span>
       </div>`;
-      msgs.scrollTop = msgs.scrollHeight;
     }
-    abHistory = []; // reset history on open
+    if(msgs) msgs.scrollTop = msgs.scrollHeight;
+    abRenderSuggestions();
     const rem = rlRemaining('angie_bot', 20);
     const statusEl = document.getElementById('abStatus');
     if(statusEl) statusEl.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} message${rem!==1?'s':''} left today`;
@@ -6844,6 +6871,57 @@ function abUnlockInput() {
   }
 }
 
+
+// ── Angie Bot sound ───────────────────────────────────────────────────
+function abPlaySound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    o.start(ctx.currentTime);
+    o.stop(ctx.currentTime + 0.25);
+  } catch(e) {}
+}
+
+function abVibrate() {
+  try { navigator.vibrate && navigator.vibrate(30); } catch(e) {}
+}
+
+// ── Suggested prompts per member ──────────────────────────────────────
+const AB_SUGGESTIONS = {
+  vihara:     ['roast me', 'why cant men love', 'how was my week?', 'am i doing okay?'],
+  bigd:       ['good boy check', 'roast me bro', 'how am i doing?', 'gang update'],
+  yasi:       ['roast me bro', 'check my mood', 'how was my week?', 'gang update'],
+  nini:       ['roast me mate', 'how am i doing?', 'check my streak', 'gang update'],
+  sanjibanji: ['roast me', 'am i cooked?', 'how was my week?', 'gang update'],
+  angie:      ['roast me', 'was this app a mistake?', 'how am i doing?', 'gang update'],
+};
+
+function abRenderSuggestions() {
+  const el = document.getElementById('abSuggestions');
+  if(!el || !currentUser) return;
+  const sugs = AB_SUGGESTIONS[currentUser.id] || ['roast me', 'how am i doing?', 'gang update'];
+  el.innerHTML = sugs.map(s =>
+    `<button class="ab-sug-btn" onclick="abUseSuggestion('${s}')">${s}</button>`
+  ).join('');
+}
+
+function abUseSuggestion(text) {
+  const input = document.getElementById('abInput');
+  if(!input) return;
+  input.value = text;
+  // Hide suggestions after use
+  const el = document.getElementById('abSuggestions');
+  if(el) el.style.display = 'none';
+  sendAngieBot();
+}
+
 async function sendAngieBot() {
   const input = document.getElementById('abInput');
   const text = input?.value?.trim();
@@ -6854,6 +6932,7 @@ async function sendAngieBot() {
   }
   input.value = '';
   input.style.height = 'auto';
+  const sugEl = document.getElementById('abSuggestions'); if(sugEl) sugEl.style.display='none';
   abAddMessage(text, true);
   abHistory.push({ role:'user', content: text });
   const typingEl = abShowTyping();
@@ -6863,10 +6942,19 @@ async function sendAngieBot() {
     const memberName   = currentUser ? currentUser.name : 'someone';
     const memberAvatar = currentUser ? currentUser.avatar : '';
     const todayMood    = currentUser ? db.todayEntry(currentUser.id) : null;
-    const moodContext  = todayMood
-      ? `They logged their mood today as ${MOODS[todayMood.score].label} (${todayMood.score}/5).`
-      : `They haven't logged their mood today yet.`;
-    const systemWithContext = AB_SYSTEM_PROMPT + `\n\nYou are currently talking to ${memberAvatar} ${memberName} (member id: ${currentUser?.id}). ${moodContext}`;
+    const recentEntries = db.getEntries(currentUser.id).slice(0,7);
+    const recentAvg = recentEntries.length
+      ? (recentEntries.reduce((s,e)=>s+e.score,0)/recentEntries.length).toFixed(1)
+      : null;
+    const streak = calcStreak(db.getEntries(currentUser.id));
+    const moodContext = [
+      todayMood
+        ? `Today they logged: ${MOODS[todayMood.score].label} (${todayMood.score}/5)${todayMood.vibe ? ', vibe: '+todayMood.vibe : ''}${todayMood.note ? ', note: "'+todayMood.note+'"' : ''}.`
+        : `They haven't logged their mood today yet.`,
+      recentAvg ? `Their 7-day average mood is ${recentAvg}/5.` : '',
+      streak > 0 ? `They are on a ${streak}-day streak.` : 'Their streak is broken.',
+    ].filter(Boolean).join(' ');
+    const systemWithContext = AB_SYSTEM_PROMPT + `\n\nYou are currently talking to ${memberAvatar} ${memberName} (member id: ${currentUser?.id}). ${moodContext} IMPORTANT: Only roast and direct your banter at ${memberName} — do not roast or make fun of other gang members unless the user brings them up first. Keep all jokes and sarcasm aimed at the person you are talking to.`;
     const res = await fetch(`${db.url}/functions/v1/angie-bot`, {
       method:'POST',
       headers:{
@@ -6886,12 +6974,15 @@ async function sendAngieBot() {
       return;
     }
     console.log('Angie Bot response:', JSON.stringify(data));
-    const reply = data.content?.[0]?.text || data.error?.message || 'idk what to say. rare moment.';
+    const raw = data.content?.[0]?.text || data.error?.message || 'idk what to say. rare moment.';
+    const reply = raw.replace(/—/g, ' ').replace(/\s{2,}/g, ' ').trim();
     typingEl?.remove();
     if(statusEl) statusEl.innerHTML = '<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · chat with me';
     rlIncrement('angie_bot');
     abHistory.push({ role:'assistant', content: reply });
     abAddMessage(reply, false);
+    abPlaySound();
+    abVibrate();
     const rem = rlRemaining('angie_bot', 20);
     const statusEl2 = document.getElementById('abStatus');
     if(statusEl2) statusEl2.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} message${rem!==1?'s':''} left today`;
@@ -7279,8 +7370,10 @@ function bsAllSunk(ships, shots) {
 
 function bsToggleOrient() {
   bsOrient = bsOrient === 'H' ? 'V' : 'H';
-  const btn = document.getElementById('bsOrientBtn');
-  if(btn) btn.textContent = bsOrient === 'H' ? '↔ Horizontal' : '↕ Vertical';
+  const icon = document.getElementById('bsOrientIcon');
+  const text = document.getElementById('bsOrientText');
+  if(icon) icon.textContent = bsOrient === 'H' ? '↔️' : '↕️';
+  if(text) text.textContent = bsOrient === 'H' ? 'Horizontal' : 'Vertical';
   renderBSPlaceGrid();
 }
 
@@ -7306,6 +7399,15 @@ function renderBSPlaceGrid() {
     }
   }
   grid.innerHTML = html;
+}
+
+function bsResetPlacement() {
+  bsPendingShips = [];
+  bsShipIndex    = 0;
+  renderBSPlaceGrid();
+  renderBSShipsRemaining();
+  const readyBtn = document.getElementById('bsReadyBtn');
+  if(readyBtn) readyBtn.style.display = 'none';
 }
 
 function bsPlaceShip(row, col) {
@@ -7534,7 +7636,7 @@ async function openBS(opp, g) {
     document.getElementById('bsPlacementScreen').style.display = 'block';
     document.getElementById('bsBattleScreen').style.display = 'none';
     document.getElementById('bsPhaseLabel').textContent = 'Place your ships ⚓';
-    document.getElementById('bsOrientBtn').textContent = '↔ Horizontal';
+    const oi = document.getElementById('bsOrientIcon'); const ot = document.getElementById('bsOrientText'); if(oi) oi.textContent='↔️'; if(ot) ot.textContent='Horizontal';
     renderBSPlaceGrid();
     renderBSShipsRemaining();
     const readyBtn = document.getElementById('bsReadyBtn');
@@ -7713,7 +7815,7 @@ async function g21Hit() {
   const total = g21HandTotal(state[myKey+'_cards']);
   const bust  = total > 21;
 
-  // If bust, auto-stand
+  // If bust, auto-stand and finish if opponent also stood
   if(bust) state[myKey+'_stood'] = true;
 
   currentG21.state = state;
@@ -7721,7 +7823,7 @@ async function g21Hit() {
   // Check if both done
   const oppKey = isX ? 'o' : 'x';
   const bothDone = (state[myKey+'_stood'] || bust) && state[oppKey+'_stood'];
-  const finished = bothDone || bust;
+  const finished = bothDone;
 
   // If finished, determine winner
   let winner = null;
@@ -7733,8 +7835,8 @@ async function g21Hit() {
     state.finished = true;
   }
 
-  const opp = MEMBERS.find(m => m.id === currentG21.oppId);
-  currentG21.myTurn = !finished && !bust;
+  // Always pass turn after hitting (unless bust with no opponent stood — still pass)
+  currentG21.myTurn = false;
   g21RenderState(state, opp);
 
   try {
@@ -7743,10 +7845,10 @@ async function g21Hit() {
       body: JSON.stringify({
         board: JSON.stringify(state),
         current_turn: currentG21.oppId,
-        ...(finished ? { status:'finished', winner } : {})
+        ...(state.finished ? { status:'finished', winner } : {})
       })
     });
-    if(!finished) {
+    if(!state.finished) {
       fetch(`${db.url}/functions/v1/notify-game`, {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
@@ -7779,6 +7881,16 @@ async function g21Stand() {
   }
 
   const opp = MEMBERS.find(m => m.id === currentG21.oppId);
+
+  // If player busted and opponent already stood — game over
+  const oppKey2 = isX ? 'o' : 'x';
+  if(bust && state[oppKey2+'_stood'] && !state.finished) {
+    const oppTotal2 = g21HandTotal(state[oppKey2+'_cards'] || []);
+    const oppFinal2 = oppTotal2 > 21 ? -1 : oppTotal2;
+    state.finished = true;
+    winner = oppFinal2 > -1 ? currentG21.oppId : 'draw';
+  }
+
   g21RenderState(state, opp);
 
   try {
