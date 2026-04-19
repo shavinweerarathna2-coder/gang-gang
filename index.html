@@ -1782,6 +1782,13 @@ body.compact-mode .gang-rank-list { gap:0; }
   border:1px solid rgba(147,197,253,.2);
 }
 .game-card.bs-card:active { transform:scale(.96); }
+/* Chess card — pink */
+.game-card.cs-card {
+  background:linear-gradient(135deg,#500724 0%,#9d174d 50%,#ec4899 100%);
+  box-shadow:0 6px 24px rgba(236,72,153,.4);
+  border:1px solid rgba(249,168,212,.25);
+}
+.game-card.cs-card:active { transform:scale(.96); }
 /* Black Jack card — orange */
 .game-card.g21-card {
   background:linear-gradient(135deg,#7c2d00 0%,#c2410c 50%,#f97316 100%);
@@ -2278,6 +2285,64 @@ body.compact-mode .gang-rank-list { gap:0; }
 
 
 
+
+/* ════════════════
+   CHESS
+════════════════ */
+.cs-modal {
+  position:fixed; inset:0; z-index:9400;
+  background:rgba(0,0,0,.88); backdrop-filter:blur(8px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; visibility:hidden; transition:opacity .3s, visibility .3s;
+  pointer-events:none;
+}
+.cs-modal.open { opacity:1; visibility:visible; pointer-events:all; }
+.cs-sheet {
+  background:linear-gradient(180deg,#1a1000 0%,#0e0221 100%);
+  border-radius:28px 28px 0 0;
+  border-top:1.5px solid rgba(212,175,55,.3);
+  padding:18px 14px 48px; width:100%; max-width:480px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+  position:relative; overflow:hidden;
+}
+.cs-sheet::before {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:20px 20px;
+}
+.cs-modal.open .cs-sheet { transform:translateY(0); }
+.cs-turn-label {
+  font-family:"Baloo 2",sans-serif; font-size:14px; font-weight:700;
+  margin-top:3px; animation:turnPulse 1.5s ease-in-out infinite;
+}
+.cs-turn-label.waiting { animation:none; color:rgba(255,255,255,.5); font-size:13px; }
+.cs-board {
+  display:grid; grid-template-columns:repeat(8,1fr);
+  margin:8px auto; max-width:340px; position:relative; z-index:1;
+  border:2px solid rgba(212,175,55,.4); border-radius:4px; overflow:hidden;
+}
+.cs-cell {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:20px; cursor:pointer; transition:all .1s;
+  -webkit-tap-highlight-color:transparent; position:relative;
+  min-height:36px;
+}
+.cs-cell.light { background:#f0d9b5; }
+.cs-cell.dark  { background:#b58863; }
+.cs-cell.selected { background:#f6f669 !important; }
+.cs-cell.legal-move::after {
+  content:""; position:absolute; width:30%; height:30%; border-radius:50%;
+  background:rgba(0,0,0,.25);
+}
+.cs-cell.legal-capture { background:rgba(246,246,105,.6) !important; }
+.cs-cell.in-check { background:#ff6b6b !important; }
+.cs-cell:active { opacity:.8; }
+.cs-captured {
+  font-size:12px; text-align:center; color:rgba(255,255,255,.5);
+  min-height:18px; margin:2px 0; position:relative; z-index:1;
+  letter-spacing:1px;
+}
+
 /* ════════════════
    BATTLESHIPS
 ════════════════ */
@@ -2336,7 +2401,7 @@ body.compact-mode .gang-rank-list { gap:0; }
 }
 .bs-grid {
   display:grid; grid-template-columns:repeat(8,1fr);
-  gap:3px; margin:0 auto 12px; position:relative; z-index:1;
+  gap:3px; margin:0 auto 20px; position:relative; z-index:1;
   max-width:320px;
 }
 .bs-grid-sm { max-width:240px; gap:2px; }
@@ -2361,7 +2426,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   text-align:center; position:relative; z-index:1;
 }
 .bs-fleet-label { margin-top:8px; }
-.bs-ready-btn { margin-top:10px; margin-bottom:18px; background:linear-gradient(135deg,#1d4ed8,#3b82f6) !important; color:#fff !important; }
+.bs-ready-btn { margin-top:16px; margin-bottom:18px; background:linear-gradient(135deg,#1d4ed8,#3b82f6) !important; color:#fff !important; }
 
 /* ════════════════
    21 GAME
@@ -3507,6 +3572,27 @@ syncHtmlBg('loading');
 </div>
 
 
+
+<!-- ════ CHESS MODAL ════ -->
+<div class="cs-modal" id="csModal">
+  <div class="cs-sheet">
+    <div class="ttt-handle"></div>
+    <div class="ttt-header">
+      <div class="ttt-vs" id="csVs"></div>
+      <div class="cs-turn-label" id="csTurn"></div>
+    </div>
+    <div class="cs-captured" id="csCapturedTop"></div>
+    <div class="cs-board" id="csBoard"></div>
+    <div class="cs-captured" id="csCapturedBot"></div>
+    <div class="ttt-outcome" id="csOutcome" style="display:none">
+      <div class="ttt-outcome-emoji" id="csOutcomeEmoji"></div>
+      <div class="ttt-outcome-title" id="csOutcomeTitle"></div>
+      <div class="ttt-outcome-sub"   id="csOutcomeSub"></div>
+    </div>
+    <button class="ttt-close-btn" id="csCloseBtn" onclick="closeCS()">Close</button>
+  </div>
+</div>
+
 <!-- ════ BATTLESHIPS MODAL ════ -->
 <div class="bs-modal" id="bsModal">
   <div class="bs-sheet">
@@ -3671,10 +3757,6 @@ syncHtmlBg('loading');
   </div>
   <!-- Messages -->
   <div class="ab-messages" id="abMessages">
-    <div class="ab-bubble ab-bubble-bot">
-      <span class="ab-bubble-text">oh great, another one 🙄 what do you want</span>
-      <span class="ab-timestamp">now</span>
-    </div>
   </div>
   <!-- Input -->
   <div class="ab-suggestions" id="abSuggestions"></div>
@@ -4062,10 +4144,21 @@ syncHtmlBg('loading');
           <div class="game-card-desc">Hit or stand — closest wins</div>
           <div class="game-card-play">Play now</div>
         </div>
+        <div class="game-card cs-card" onclick="showGameInfo('chess')">
+          <div class="game-card-icon">♟️</div>
+          <div class="game-card-name">Chess</div>
+          <div class="game-card-desc">The classic battle of minds</div>
+          <div class="game-card-play">Play now</div>
+        </div>
         <div class="game-card coming-soon">
           <div class="game-card-icon">🧩</div>
           <div class="game-card-name">Coming Soon</div>
           <div class="game-card-desc">Piece it together</div>
+        </div>
+        <div class="game-card coming-soon">
+          <div class="game-card-icon">🎪</div>
+          <div class="game-card-name">Coming Soon</div>
+          <div class="game-card-desc">Expect the unexpected</div>
         </div>
 
       </div>
@@ -6390,6 +6483,7 @@ function startGameFlow(type) {
 
 async function createGame(type, oppId) {
   closeAllSheets();
+
   if(!db.url || !db.key) { showToast('Supabase not connected'); return; }
   const opp = MEMBERS.find(m => m.id === oppId);
 
@@ -6427,7 +6521,7 @@ async function createGame(type, oppId) {
         type,
         player_x: currentUser.id,
         player_o: oppId,
-        board: type==='c4' ? JSON.stringify(Array(42).fill('')) : type==='rps' ? JSON.stringify({rounds:[],current:{x:null,o:null}}) : type==='bs' ? JSON.stringify({x_ships:[],o_ships:[],x_shots:[],o_shots:[],x_placed:false,o_placed:false}) : type==='21' ? (()=>{ const S=['♠','♣','♥','♦']; const V=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; const cv=v=>v==='A'?11:['J','Q','K'].includes(v)?10:parseInt(v); const deal=()=>{let cards,total;do{cards=[{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]},{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]}];total=cards.reduce((s,c)=>s+cv(c.val),0);let a=cards.filter(c=>c.val==='A').length;while(total>21&&a>0){total-=10;a--;}}while(total>=17);return cards;}; return JSON.stringify({x_cards:deal(),o_cards:deal(),x_stood:false,o_stood:false,finished:false});})() : JSON.stringify(Array(9).fill('')),
+        board: type==='c4' ? JSON.stringify(Array(42).fill('')) : type==='rps' ? JSON.stringify({rounds:[],current:{x:null,o:null}}) : type==='bs' ? JSON.stringify({x_ships:[],o_ships:[],x_shots:[],o_shots:[],x_placed:false,o_placed:false}) : type==="chess" ? JSON.stringify({board:["r","n","b","q","k","b","n","r","p","p","p","p","p","p","p","p",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","P","P","P","P","P","P","P","P","R","N","B","Q","K","B","N","R"],turn:"w",castling:"KQkq",enPassant:null}) : type==="21" ? (()=>{ const S=['♠','♣','♥','♦']; const V=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; const cv=v=>v==='A'?11:['J','Q','K'].includes(v)?10:parseInt(v); const deal=()=>{let cards,total;do{cards=[{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]},{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]}];total=cards.reduce((s,c)=>s+cv(c.val),0);let a=cards.filter(c=>c.val==='A').length;while(total>21&&a>0){total-=10;a--;}}while(total>=17);return cards;}; return JSON.stringify({x_cards:deal(),o_cards:deal(),x_stood:false,o_stood:false,finished:false});})() : JSON.stringify(Array(9).fill('')),
         current_turn: currentUser.id,
         status: 'pending',
         winner: null,
@@ -6479,7 +6573,7 @@ async function renderActiveGames() {
       let status = myTurn ? "Your turn! 👉" : `${opp?.name}'s turn`;
       if(isPending) status = "Tap to accept challenge 🎮";
       return `<div class="active-game-row" onclick="openGame('${g.id}')">
-        <div class="agr-icon">${g.type==='c4'?'🔴':g.type==='rps'?'✊':g.type==='21'?'🃏':g.type==='bs'?'🚢':'⭕'}</div>
+        <div class="agr-icon">${g.type==='c4'?'🔴':g.type==='rps'?'✊':g.type==='21'?'🃏':g.type==='bs'?'🚢':g.type==='chess'?'♟️':'⭕'}</div>
         <div class="agr-info">
           <div class="agr-name">${currentUser.avatar} ${currentUser.name} <span class="agr-vs">vs</span> ${opp?.avatar} ${opp?.name}</div>
           <div class="agr-status">${status}</div>
@@ -6540,6 +6634,9 @@ async function openGame(gameId) {
     } else if(g.type === 'bs') {
       currentBS = { ...gameData };
       openBS(opp, g);
+    } else if(g.type === 'chess') {
+      currentCS = { ...gameData };
+      openCS(opp, g);
     }
   } catch(e) { showToast('Error loading game'); }
 }
@@ -6779,22 +6876,32 @@ function openAngieBot() {
   openSheet('angieBotSheet');
   setTimeout(() => {
     const msgs = document.getElementById('abMessages');
-    // Only set greeting if chat is empty (first open or after clear)
+
+    // Restore from localStorage if DOM is empty
     if(msgs && msgs.children.length === 0) {
-      const greetings = {
-        vihara:     `oh it's you again 🙄 what is it now`,
-        bigd:       `bro 😭 you actually opened this. good boy 🐶 what do you need`,
-        yasi:       `bro you came to chat with a bot. a BOT. anyway what's up 🐶`,
-        nini:       `oh mate 🤓 you're here. what do you want mate 🦖`,
-        sanjibanji: `the clown has arrived 🤡 you're already cooked and you haven't even said anything yet 😮‍💨`,
-        angie:      `oh brilliant. the guy who BUILT me is now talking to me. truly your most embarrassing creation. what do you want`,
-      };
-      const greeting = currentUser ? (greetings[currentUser.id] || 'oh great, another one 🙄 what do you want') : 'oh great, another one 🙄 what do you want';
-      msgs.innerHTML = `<div class="ab-bubble ab-bubble-bot">
-        <span class="ab-bubble-text">${greeting}</span>
-        <span class="ab-timestamp">now</span>
-      </div>`;
+      const savedHtml    = localStorage.getItem(`ab_msgs_${currentUser?.id}`);
+      const savedHistory = localStorage.getItem(`ab_hist_${currentUser?.id}`);
+      if(savedHtml) {
+        msgs.innerHTML = savedHtml;
+        if(savedHistory) try { abHistory = JSON.parse(savedHistory); } catch(e) { abHistory = []; }
+      } else {
+        // First ever open — show personalised greeting
+        const greetings = {
+          vihara:     `oh it's you again 🙄 what is it now`,
+          bigd:       `bro 😭 you actually opened this. good boy 🐶 what do you need`,
+          yasi:       `bro you came to chat with a bot. a BOT. anyway what's up 🐶`,
+          nini:       `oh mate 🤓 you're here. what do you want mate 🦖`,
+          sanjibanji: `the clown has arrived 🤡 you're already cooked and you haven't even said anything yet 😮‍💨`,
+          angie:      `oh brilliant. the guy who BUILT me is now talking to me. truly your most embarrassing creation. what do you want`,
+        };
+        const greeting = currentUser ? (greetings[currentUser.id] || 'oh great, another one 🙄 what do you want') : 'oh great, another one 🙄 what do you want';
+        msgs.innerHTML = `<div class="ab-bubble ab-bubble-bot">
+          <span class="ab-bubble-text">${greeting}</span>
+          <span class="ab-timestamp">now</span>
+        </div>`;
+      }
     }
+
     if(msgs) msgs.scrollTop = msgs.scrollHeight;
     abRenderSuggestions();
     const rem = rlRemaining('angie_bot', 20);
@@ -6810,6 +6917,8 @@ function openAngieBot() {
 
 function clearAngieBot() {
   abHistory = [];
+  localStorage.removeItem(`ab_msgs_${currentUser?.id}`);
+  localStorage.removeItem(`ab_hist_${currentUser?.id}`);
   const msgs = document.getElementById('abMessages');
   if(msgs) msgs.innerHTML = `<div class="ab-bubble ab-bubble-bot">
     <span class="ab-bubble-text">oh great, another one 🙄 what do you want</span>
@@ -6983,6 +7092,10 @@ async function sendAngieBot() {
     abAddMessage(reply, false);
     abPlaySound();
     abVibrate();
+    // Persist chat
+    const msgsEl = document.getElementById('abMessages');
+    if(msgsEl) localStorage.setItem(`ab_msgs_${currentUser?.id}`, msgsEl.innerHTML);
+    localStorage.setItem(`ab_hist_${currentUser?.id}`, JSON.stringify(abHistory));
     const rem = rlRemaining('angie_bot', 20);
     const statusEl2 = document.getElementById('abStatus');
     if(statusEl2) statusEl2.innerHTML = `<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · ${rem} message${rem!==1?'s':''} left today`;
@@ -7277,6 +7390,15 @@ const GAME_INFO = {
       { icon:'🏆', text:'When both players stand, highest score wins. Aces count as 11 or 1 to avoid busting.' },
     ]
   },
+  chess: {
+    icon: '♟️', name: 'Chess',
+    aim: 'Checkmate your opponent\'s king to win.',
+    rules: [
+      { icon:'♟️', text:'Take turns moving pieces. White (X) goes first.' },
+      { icon:'👑', text:'Put your opponent\'s king in checkmate — attacked with no escape — to win.' },
+      { icon:'⚠️', text:'You cannot make a move that leaves your own king in check. Stalemate is a draw.' },
+    ]
+  },
   bs: {
     icon: '🚢', name: 'Battleships',
     aim: 'Sink all of your opponent\'s ships before they sink yours.',
@@ -7310,6 +7432,317 @@ function giProceed() {
   closeAllSheets();
   if(pendingGameInfoType) startGameFlow(pendingGameInfoType);
 }
+
+
+// ══════════════════════════════════════════════
+//  CHESS ENGINE
+// ══════════════════════════════════════════════
+let currentCS  = null;
+let csPollTimer = null;
+let csSelected  = null; // selected square index
+let csLegalCache = []; // legal moves for selected piece
+
+const CS_INIT_BOARD = [
+  "r","n","b","q","k","b","n","r",
+  "p","p","p","p","p","p","p","p",
+  ".",".",".",".",".",".",".",".",
+  ".",".",".",".",".",".",".",".",
+  ".",".",".",".",".",".",".",".",
+  ".",".",".",".",".",".",".",".",
+  "P","P","P","P","P","P","P","P",
+  "R","N","B","Q","K","B","N","R",
+];
+
+const CS_EMOJI = {
+  "K":"♔","Q":"♕","R":"♖","B":"♗","N":"♘","P":"♙",
+  "k":"♚","q":"♛","r":"♜","b":"♝","n":"♞","p":"♟",
+};
+
+const csIsW  = p => p>="A"&&p<="Z";
+const csIsB  = p => p>="a"&&p<="z";
+const csCol  = p => csIsW(p)?"w":"b";
+const csEmp  = p => p===".";
+const csR    = sq => Math.floor(sq/8);
+const csC    = sq => sq%8;
+const csSq   = (r,c) => r*8+c;
+const csOnB  = (r,c) => r>=0&&r<8&&c>=0&&c<8;
+
+function csFindKing(board, color) {
+  const k = color==="w"?"K":"k";
+  return board.indexOf(k);
+}
+
+// Pseudo moves without castling (used for attack detection to avoid recursion)
+function csPseudoNC(board, sq, ep) {
+  const p = board[sq];
+  if(csEmp(p)) return [];
+  const col = csCol(p), pc = p.toUpperCase();
+  const r = csR(sq), c = csC(sq), moves = [];
+  const fr = col==="w"?csIsW:csIsB;
+  const en = col==="w"?csIsB:csIsW;
+
+  const slide=(dr,dc)=>{let nr=r+dr,nc=c+dc;while(csOnB(nr,nc)){const t=csSq(nr,nc);if(fr(board[t]))break;moves.push(t);if(en(board[t]))break;nr+=dr;nc+=dc;}};
+  const jump=(dr,dc)=>{const nr=r+dr,nc=c+dc;if(csOnB(nr,nc)&&!fr(board[csSq(nr,nc)]))moves.push(csSq(nr,nc));};
+
+  if(pc==="P"){
+    const dir=col==="w"?-1:1, sr=col==="w"?6:1;
+    if(csOnB(r+dir,c)&&csEmp(board[csSq(r+dir,c)])){moves.push(csSq(r+dir,c));if(r===sr&&csEmp(board[csSq(r+dir*2,c)]))moves.push(csSq(r+dir*2,c));}
+    for(const dc of[-1,1]){if(csOnB(r+dir,c+dc)){const t=csSq(r+dir,c+dc);if(en(board[t]))moves.push(t);if(ep!==null&&ep===t)moves.push(t);}}
+  }
+  if(pc==="N"){for(const[dr,dc]of[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]])jump(dr,dc);}
+  if(pc==="B"||pc==="Q"){for(const[dr,dc]of[[-1,-1],[-1,1],[1,-1],[1,1]])slide(dr,dc);}
+  if(pc==="R"||pc==="Q"){for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]])slide(dr,dc);}
+  if(pc==="K"){for(const[dr,dc]of[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]])jump(dr,dc);}
+  return moves;
+}
+
+function csAttacked(board, sq, byColor) {
+  for(let i=0;i<64;i++){
+    const p=board[i];
+    if(!csEmp(p)&&csCol(p)===byColor&&csPseudoNC(board,i,null).includes(sq))return true;
+  }
+  return false;
+}
+
+function csPseudoMoves(board, sq, castling, ep) {
+  const p = board[sq];
+  if(csEmp(p)) return [];
+  const col=csCol(p), pc=p.toUpperCase();
+  const moves = csPseudoNC(board, sq, ep);
+
+  if(pc==="K") {
+    const enemy = col==="w"?"b":"w";
+    if(col==="w") {
+      if((castling||"").includes("K")&&csEmp(board[61])&&csEmp(board[62])&&
+         !csAttacked(board,60,enemy)&&!csAttacked(board,61,enemy)&&!csAttacked(board,62,enemy))moves.push(62);
+      if((castling||"").includes("Q")&&csEmp(board[59])&&csEmp(board[58])&&csEmp(board[57])&&
+         !csAttacked(board,60,enemy)&&!csAttacked(board,59,enemy)&&!csAttacked(board,58,enemy))moves.push(58);
+    } else {
+      if((castling||"").includes("k")&&csEmp(board[5])&&csEmp(board[6])&&
+         !csAttacked(board,4,enemy)&&!csAttacked(board,5,enemy)&&!csAttacked(board,6,enemy))moves.push(6);
+      if((castling||"").includes("q")&&csEmp(board[3])&&csEmp(board[2])&&csEmp(board[1])&&
+         !csAttacked(board,4,enemy)&&!csAttacked(board,3,enemy)&&!csAttacked(board,2,enemy))moves.push(2);
+    }
+  }
+  return moves;
+}
+
+function csApplyBoard(board, from, to, ep) {
+  const b=[...board], p=b[from], pc=p.toUpperCase(), col=csCol(p);
+  if(pc==="P"&&to===ep&&ep!==null){const dir=col==="w"?1:-1;b[to+dir*8]=".";}
+  if(pc==="K"){
+    if(from===60&&to===62){b[63]=".";b[61]="R";}
+    if(from===60&&to===58){b[56]=".";b[59]="R";}
+    if(from===4 &&to===6) {b[7]="."; b[5]="r";}
+    if(from===4 &&to===2) {b[0]="."; b[3]="r";}
+  }
+  b[to]=b[from]; b[from]=".";
+  if(pc==="P"&&(csR(to)===0||csR(to)===7))b[to]=col==="w"?"Q":"q";
+  return b;
+}
+
+function csInCheck(board, color) {
+  const kSq=csFindKing(board,color);
+  return kSq!==-1&&csAttacked(board,kSq,color==="w"?"b":"w");
+}
+
+function csLegalFrom(state, sq) {
+  const {board,castling,enPassant}=state;
+  const p=board[sq]; if(csEmp(p))return [];
+  const col=csCol(p);
+  return csPseudoMoves(board,sq,castling,enPassant).filter(to=>{
+    const nb=csApplyBoard(board,from=sq,to,enPassant);
+    return !csInCheck(nb,col);
+  });
+}
+
+function csApplyMove(state, from, to) {
+  const board=csApplyBoard(state.board,from,to,state.enPassant);
+  const p=state.board[from], pc=p.toUpperCase(), col=csCol(p);
+  let castling=state.castling||"KQkq";
+  if(pc==="K")castling=castling.replace(col==="w"?"K":"k","").replace(col==="w"?"Q":"q","");
+  if(from===63||to===63)castling=castling.replace("K","");
+  if(from===56||to===56)castling=castling.replace("Q","");
+  if(from===7 ||to===7) castling=castling.replace("k","");
+  if(from===0 ||to===0) castling=castling.replace("q","");
+  const enPassant=(pc==="P"&&Math.abs(to-from)===16)?Math.round((from+to)/2):null;
+  return {board, turn:col==="w"?"b":"w", castling, enPassant};
+}
+
+function csHasLegalMoves(state, color) {
+  for(let sq=0;sq<64;sq++){
+    const p=state.board[sq];
+    if(!csEmp(p)&&csCol(p)===color&&csLegalFrom(state,sq).length>0)return true;
+  }
+  return false;
+}
+
+// ── Chess UI ──────────────────────────────────────────────────────────
+function csRenderBoard(state, opp) {
+  const boardEl=document.getElementById("csBoard");
+  if(!boardEl||!currentCS)return;
+  const {board}=state;
+  const myColor=currentCS.mySymbol==="X"?"w":"b";
+  const inChk=csInCheck(board,myColor);
+  const kingSq=inChk?csFindKing(board,myColor):-1;
+
+  let html="";
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const sq=csSq(r,c);
+      const p=board[sq];
+      const isLight=(r+c)%2===0;
+      const isSel=csSelected===sq;
+      const isLegal=csLegalCache.includes(sq);
+      const isCapture=isLegal&&!csEmp(p);
+      const isCheck=sq===kingSq;
+      let cls="cs-cell "+(isLight?"light":"dark");
+      if(isSel)cls+=" selected";
+      else if(isCapture)cls+=" legal-capture";
+      else if(isLegal)cls+=" legal-move";
+      if(isCheck)cls+=" in-check";
+      const emoji=csEmp(p)?"":CS_EMOJI[p]||p;
+      html+=`<div class="${cls}" onclick="csHandleClick(${sq})">${emoji}</div>`;
+    }
+  }
+  boardEl.innerHTML=html;
+
+  // Captured pieces
+  const whiteCap=[],blackCap=[];
+  const initCounts={"P":8,"R":2,"N":2,"B":2,"Q":1,"K":1};
+  const remaining={};
+  board.forEach(p=>{if(!csEmp(p)){const k=p.toUpperCase();remaining[k]=(remaining[k]||0)+1;}});
+  // This is simplified — just show material balance
+  const capturedTop=document.getElementById("csCapturedTop");
+  const capturedBot=document.getElementById("csCapturedBot");
+  if(capturedTop)capturedTop.textContent="";
+  if(capturedBot)capturedBot.textContent="";
+
+  // Turn label
+  const turnEl=document.getElementById("csTurn");
+  if(turnEl){
+    const myTurn=state.turn===myColor&&currentCS.myTurn;
+    if(myTurn){turnEl.textContent="Your turn ♟️";turnEl.className="cs-turn-label";}
+    else{turnEl.textContent=`Waiting for ${opp?.name||"opponent"}…`;turnEl.className="cs-turn-label waiting";}
+  }
+}
+
+function csHandleClick(sq) {
+  if(!currentCS||!currentCS.myTurn)return;
+  const state=currentCS.state;
+  const myColor=currentCS.mySymbol==="X"?"w":"b";
+  const p=state.board[sq];
+
+  if(csSelected===null) {
+    // Select a piece
+    if(!csEmp(p)&&csCol(p)===myColor){
+      csSelected=sq;
+      csLegalCache=csLegalFrom(state,sq);
+      const opp=MEMBERS.find(m=>m.id===currentCS.oppId);
+      csRenderBoard(state,opp);
+    }
+  } else {
+    if(csLegalCache.includes(sq)){
+      // Make the move
+      csMakeMove(csSelected,sq);
+      csSelected=null; csLegalCache=[];
+    } else if(!csEmp(p)&&csCol(p)===myColor&&sq!==csSelected){
+      // Select different piece
+      csSelected=sq;
+      csLegalCache=csLegalFrom(state,sq);
+      const opp=MEMBERS.find(m=>m.id===currentCS.oppId);
+      csRenderBoard(state,opp);
+    } else {
+      // Deselect
+      csSelected=null; csLegalCache=[];
+      const opp=MEMBERS.find(m=>m.id===currentCS.oppId);
+      csRenderBoard(state,opp);
+    }
+  }
+}
+
+async function csMakeMove(from, to) {
+  const newState=csApplyMove(currentCS.state,from,to);
+  currentCS.state=newState;
+  currentCS.myTurn=false;
+  const opp=MEMBERS.find(m=>m.id===currentCS.oppId);
+
+  // Check game end conditions for opponent
+  const oppColor=newState.turn;
+  const inCheck=csInCheck(newState.board,oppColor);
+  const hasLegal=csHasLegalMoves(newState,oppColor);
+  let finished=false, winner=null, statusMsg="";
+
+  if(!hasLegal&&inCheck){finished=true;winner=currentUser.id;statusMsg="Checkmate";}
+  else if(!hasLegal){finished=true;winner="draw";statusMsg="Stalemate";}
+
+  csRenderBoard(newState,opp);
+  if(finished)showOutcome("cs",winner===currentUser.id?"win":"draw",opp?.name||"Opponent");
+
+  try {
+    await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentCS.id}`,{
+      method:"PATCH",headers:db._headers(),
+      body:JSON.stringify({
+        board:JSON.stringify(newState),
+        current_turn:currentCS.oppId,
+        ...(finished?{status:"finished",winner}:{})
+      })
+    });
+    if(!finished){
+      fetch(`${db.url}/functions/v1/notify-game`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+db.key},
+        body:JSON.stringify({from_name:currentUser.name,from_avatar:currentUser.avatar,to_id:currentCS.oppId,game_id:currentCS.id,game_type:"chess",is_turn:true})
+      }).catch(()=>{});
+    }
+  } catch(e){console.warn("Chess save failed:",e);}
+}
+
+function pollCS(opp) {
+  clearInterval(csPollTimer);
+  csPollTimer=setInterval(async()=>{
+    if(!currentCS){clearInterval(csPollTimer);return;}
+    if(!document.getElementById("csModal").classList.contains("open")){clearInterval(csPollTimer);return;}
+    try {
+      const res=await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentCS.id}`,{headers:db._headers()});
+      const[g]=await res.json(); if(!g)return;
+      const ns=JSON.parse(g.board);
+      if(JSON.stringify(ns)!==JSON.stringify(currentCS.state)){
+        currentCS.state=ns;
+        currentCS.myTurn=g.current_turn===currentUser.id;
+        currentCS.status=g.status;
+        csSelected=null;csLegalCache=[];
+        csRenderBoard(ns,opp);
+        if(g.status==="finished"){
+          clearInterval(csPollTimer);
+          const won=g.winner===currentUser.id,draw=g.winner==="draw";
+          showOutcome("cs",draw?"draw":won?"win":"lose",opp?.name||"Opponent");
+        }
+      }
+    } catch(e){}
+  },3000);
+}
+
+function openCS(opp, g) {
+  const modal=document.getElementById("csModal");
+  document.getElementById("csVs").textContent=`${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
+  document.getElementById("csCloseBtn").textContent="Close";
+  const outEl=document.getElementById("csOutcome");if(outEl)outEl.style.display="none";
+  const state=JSON.parse(typeof g.board==="string"?g.board:JSON.stringify(g.board));
+  currentCS.state=state;
+  csSelected=null;csLegalCache=[];
+  csRenderBoard(state,opp);
+  modal.classList.add("open");
+  if(g.status!=="finished")pollCS(opp);
+}
+
+function closeCS() {
+  clearInterval(csPollTimer);
+  document.getElementById("csModal").classList.remove("open");
+  currentCS=null;csSelected=null;csLegalCache=[];
+  renderActiveGames();
+}
+
 
 // ══════════════════════════════════════════════
 //  BATTLESHIPS
@@ -7543,6 +7976,9 @@ async function bsFire(row, col) {
 
   if(finished) {
     currentBS.status = 'finished';
+    setTimeout(() => {
+      const ps = document.getElementById('bsBattleScreen'); if(ps) ps.style.display='none';
+    }, 5000);
     showOutcome('bs', 'win', opp?.name || 'Opponent');
   }
 
@@ -7600,6 +8036,9 @@ function pollBS(opp) {
           clearInterval(bsPollTimer);
           const won = g.winner === currentUser.id;
           renderBSBattleGrids(newState);
+          setTimeout(() => {
+            const ps = document.getElementById('bsBattleScreen'); if(ps) ps.style.display='none';
+          }, 5000);
           showOutcome('bs', won ? 'win' : 'lose', opp?.name || 'Opponent');
         }
       }
