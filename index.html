@@ -8311,12 +8311,12 @@ async function g21Hit() {
 
   currentG21.state = state;
 
-  // Check if both done
+  // Check if game is over
   const oppKey = isX ? 'o' : 'x';
   const bothDone = (state[myKey+'_stood'] || bust) && state[oppKey+'_stood'];
-  const finished = bothDone;
+  const finished = bust || bothDone; // bust = instant loss
 
-  // If finished, determine winner
+  // Determine winner
   let winner = null;
   if(finished) {
     const myTotal  = bust ? -1 : total;
