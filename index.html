@@ -6527,21 +6527,6 @@ function startGameFlow(type) {
 async function createGame(type, oppId) {
   closeAllSheets();
 
-  // TEMP TEST — Chess
-  if(type === 'chess') {
-    const opp = MEMBERS.find(m => m.id === oppId);
-    const state = {board:["r","n","b","q","k","b","n","r","p","p","p","p","p","p","p","p",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","P","P","P","P","P","P","P","P","R","N","B","Q","K","B","N","R"],turn:'w',castling:'KQkq',enPassant:null};
-    currentCS = {id:'test',type:'chess',mySymbol:'X',oppId,board:[],myTurn:true,status:'active',state};
-    csSelected=null; csLegalCache=[];
-    document.getElementById('csVs').textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
-    document.getElementById('csCloseBtn').textContent = 'Close';
-    const outEl=document.getElementById('csOutcome'); if(outEl) outEl.style.display='none';
-    csRenderBoard(state, opp);
-    document.getElementById('csModal').classList.add('open');
-    return;
-  }
-  // END TEMP TEST
-
   if(!db.url || !db.key) { showToast('Supabase not connected'); return; }
   const opp = MEMBERS.find(m => m.id === oppId);
 
@@ -8258,10 +8243,10 @@ function g21RenderState(state, opp) {
   const oppLabel = document.getElementById('g21OppLabel');
   if(oppLabel) oppLabel.textContent = `${opp?.avatar || ''} ${opp?.name || 'Opponent'}`;
 
-  // Actions
+  // Actions — show if it's my turn AND I haven't stood AND not busted AND not finished
   const actions = document.getElementById('g21Actions');
   const turnEl  = document.getElementById('g21Turn');
-  const isMyTurn = currentG21.myTurn;
+  const canAct  = currentG21.myTurn && !myStood && !myBust && !finished && !state.finished;
 
   if(finished || state.finished) {
     if(actions) actions.style.display = 'none';
@@ -8272,7 +8257,7 @@ function g21RenderState(state, opp) {
   } else if(myStood) {
     if(actions) actions.style.display = 'none';
     if(turnEl) { turnEl.textContent = `Waiting for ${opp?.name}…`; turnEl.className = 'ttt-turn waiting'; }
-  } else if(isMyTurn) {
+  } else if(canAct) {
     if(actions) actions.style.display = 'flex';
     if(turnEl) { turnEl.textContent = 'Your turn — Hit or Stand?'; turnEl.className = 'ttt-turn'; }
   } else {
@@ -8298,7 +8283,6 @@ async function openG21(opp, g) {
   // Reset
   const outEl = document.getElementById('g21Outcome'); if(outEl) outEl.style.display='none';
   document.getElementById('g21CloseBtn').textContent = 'Close';
-  document.getElementById('g21Actions').style.display = 'none';
 
   modal.classList.add('open');
 
@@ -8342,11 +8326,12 @@ async function g21Hit() {
     state.finished = true;
   }
 
-  // Always pass turn after hitting (unless bust with no opponent stood — still pass)
+  // Always pass turn after hitting
   currentG21.myTurn = false;
+  const opp = MEMBERS.find(m => m.id === currentG21.oppId);
   g21RenderState(state, opp);
 
-  try {
+  if(currentG21.id !== 'test') try {
     await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentG21.id}`, {
       method:'PATCH', headers: db._headers(),
       body: JSON.stringify({
@@ -8362,7 +8347,7 @@ async function g21Hit() {
         body: JSON.stringify({ from_name:currentUser.name, from_avatar:currentUser.avatar, to_id:currentG21.oppId, game_id:currentG21.id, game_type:'21', is_turn:true })
       }).catch(()=>{});
     }
-  } catch(e) { console.warn('21 save failed:', e); }
+  } catch(e) { console.warn('21 hit save failed:', e); }
 }
 
 async function g21Stand() {
@@ -8388,19 +8373,9 @@ async function g21Stand() {
   }
 
   const opp = MEMBERS.find(m => m.id === currentG21.oppId);
-
-  // If player busted and opponent already stood — game over
-  const oppKey2 = isX ? 'o' : 'x';
-  if(bust && state[oppKey2+'_stood'] && !state.finished) {
-    const oppTotal2 = g21HandTotal(state[oppKey2+'_cards'] || []);
-    const oppFinal2 = oppTotal2 > 21 ? -1 : oppTotal2;
-    state.finished = true;
-    winner = oppFinal2 > -1 ? currentG21.oppId : 'draw';
-  }
-
   g21RenderState(state, opp);
 
-  try {
+  if(currentG21.id !== 'test') try {
     await fetch(`${db.url}/rest/v1/game_sessions?id=eq.${currentG21.id}`, {
       method:'PATCH', headers: db._headers(),
       body: JSON.stringify({
