@@ -2052,19 +2052,23 @@ body.compact-mode .gang-rank-list { gap:0; }
 /* ════════════════
    ANGIE BOT
 ════════════════ */
-@keyframes abBubbleIn { from{opacity:0;transform:translateY(6px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes abBubbleIn { from{opacity:0;transform:translateY(8px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
 @keyframes abDot { 0%,80%,100%{transform:scale(0);opacity:.4} 40%{transform:scale(1);opacity:1} }
+@keyframes abAvatarPulse { 0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,.4)} 50%{box-shadow:0 0 0 8px rgba(168,85,247,0)} }
+@keyframes abOnlinePing { 0%,100%{transform:scale(1)} 50%{transform:scale(1.4);opacity:.6} }
 
+/* ── Sheet background ── */
 .ab-header {
   display:flex; align-items:center; gap:12px;
   padding:12px 18px 12px; border-bottom:1px solid var(--border);
   flex-shrink:0; background:var(--bg2);
 }
 .ab-avatar {
-  width:46px; height:46px; border-radius:50%; flex-shrink:0;
+  width:48px; height:48px; border-radius:50%; flex-shrink:0;
   background:linear-gradient(135deg,#7e22ce,#ec4899);
   display:flex; align-items:center; justify-content:center;
-  font-size:24px; box-shadow:0 3px 12px rgba(168,85,247,.4);
+  font-size:24px;
+  animation:abAvatarPulse 3s ease-in-out infinite;
 }
 .ab-info { flex:1; }
 .ab-name {
@@ -2075,7 +2079,7 @@ body.compact-mode .gang-rank-list { gap:0; }
 .ab-status { font-size:11px; color:var(--text-dim); margin-top:1px; display:flex; align-items:center; gap:5px; }
 .ab-online-dot {
   width:8px; height:8px; border-radius:50%; background:#22c55e; flex-shrink:0;
-  box-shadow:0 0 0 2px rgba(34,197,94,.25);
+  animation:abOnlinePing 2s ease-in-out infinite;
 }
 .ab-online-text { color:#22c55e; font-weight:700; }
 .ab-clear {
@@ -2084,20 +2088,22 @@ body.compact-mode .gang-rank-list { gap:0; }
   border-radius:50%; transition:background .15s;
 }
 .ab-clear:active { background:var(--bg3); }
+
+/* ── Messages area ── */
 .ab-messages {
   flex:1; overflow-y:auto; padding:16px 14px;
-  display:flex; flex-direction:column; gap:8px;
+  display:flex; flex-direction:column; gap:10px;
   overscroll-behavior:contain; min-height:0;
-  background:var(--bg);
+  background:transparent;
 }
 .ab-bubble {
-  max-width:78%; display:flex; flex-direction:column; gap:2px;
-  animation:abBubbleIn .25s ease both;
+  max-width:80%; display:flex; flex-direction:column; gap:3px;
+  animation:abBubbleIn .28s cubic-bezier(.175,.885,.32,1.1) both;
 }
 .ab-bubble-bot  { align-self:flex-start; }
 .ab-bubble-user { align-self:flex-end; }
 .ab-bubble-text {
-  padding:10px 14px; border-radius:20px; font-size:14px; line-height:1.55;
+  padding:11px 15px; border-radius:20px; font-size:14px; line-height:1.6;
   font-family:'Nunito',sans-serif; word-break:break-word;
 }
 .ab-bubble-bot .ab-bubble-text {
@@ -2108,15 +2114,17 @@ body.compact-mode .gang-rank-list { gap:0; }
   background:linear-gradient(135deg,var(--theme-g1),var(--theme-flame1));
   color:#fff; border-bottom-right-radius:5px;
 }
+
 /* Animated typing dots */
 .ab-typing-dots {
-  display:flex; align-items:center; gap:4px;
+  display:flex; align-items:center; gap:5px;
   padding:12px 16px; background:var(--bg2); border:1px solid var(--border);
   border-radius:20px; border-bottom-left-radius:5px;
   width:fit-content;
 }
 .ab-typing-dots span {
-  width:7px; height:7px; border-radius:50%; background:var(--text-dim);
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(168,85,247,.8);
   display:block; animation:abDot 1.2s ease-in-out infinite;
 }
 .ab-typing-dots span:nth-child(2) { animation-delay:.15s; }
@@ -2126,6 +2134,8 @@ body.compact-mode .gang-rank-list { gap:0; }
 }
 .ab-bubble-bot  .ab-timestamp { align-self:flex-start; }
 .ab-bubble-user .ab-timestamp { align-self:flex-end; }
+
+/* ── Suggestions ── */
 .ab-suggestions {
   display:flex; gap:8px; padding:10px 14px; overflow-x:auto;
   scrollbar-width:none; flex-shrink:0; background:var(--bg2);
@@ -2134,13 +2144,15 @@ body.compact-mode .gang-rank-list { gap:0; }
 .ab-suggestions::-webkit-scrollbar { display:none; }
 .ab-sug-btn {
   white-space:nowrap; flex-shrink:0;
-  padding:9px 16px; border-radius:100px; cursor:pointer;
+  padding:8px 16px; border-radius:100px; cursor:pointer;
   background:var(--bg3); border:1.5px solid var(--border);
   color:var(--text-muted); font-size:13px; font-weight:600;
   font-family:'Nunito',sans-serif; transition:all .15s;
   -webkit-tap-highlight-color:transparent;
 }
 .ab-sug-btn:active { background:rgba(168,85,247,.2); border-color:rgba(168,85,247,.5); color:var(--text); }
+
+/* ── Input area ── */
 .ab-input-wrap {
   display:flex; gap:8px; align-items:flex-end;
   padding:10px 12px 14px; border-top:1px solid var(--border);
@@ -2319,29 +2331,58 @@ body.compact-mode .gang-rank-list { gap:0; }
 .cs-board {
   display:grid; grid-template-columns:repeat(8,1fr);
   margin:8px auto; max-width:340px; position:relative; z-index:1;
-  border:2px solid rgba(212,175,55,.4); border-radius:4px; overflow:hidden;
+  border:3px solid #1a1200; border-radius:6px; overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
 }
 .cs-cell {
   aspect-ratio:1; display:flex; align-items:center; justify-content:center;
-  font-size:20px; cursor:pointer; transition:all .1s;
+  cursor:pointer; transition:all .1s;
   -webkit-tap-highlight-color:transparent; position:relative;
   min-height:36px;
 }
-.cs-cell.light { background:#f0d9b5; }
-.cs-cell.dark  { background:#b58863; }
-.cs-cell.selected { background:#f6f669 !important; }
+.cs-piece {
+  width:82%; height:82%; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:17px; line-height:1; pointer-events:none;
+  transition:transform .1s; border:2.5px solid transparent;
+  position:relative;
+}
+.cs-piece.white {
+  background:radial-gradient(circle,#fff 60%,#e0d0b0 100%);
+  border-color:rgba(0,0,0,.5);
+  box-shadow:0 2px 6px rgba(0,0,0,.45);
+  color:transparent; text-shadow:0 0 0 #222;
+}
+.cs-piece.black {
+  background:radial-gradient(circle,#222 60%,#000 100%);
+  border-color:rgba(255,255,255,.3);
+  box-shadow:0 2px 6px rgba(0,0,0,.6);
+  color:transparent; text-shadow:0 0 0 #fff;
+}
+.cs-cell.light { background:#e8c97a; }
+.cs-cell.dark  { background:#9b6b2e; }
+.cs-cell.selected { background:#7fc97a !important; }
+.cs-cell.selected .cs-piece { transform:scale(1.08); }
 .cs-cell.legal-move::after {
-  content:""; position:absolute; width:30%; height:30%; border-radius:50%;
-  background:rgba(0,0,0,.25);
+  content:""; position:absolute; width:32%; height:32%; border-radius:50%;
+  background:rgba(0,0,0,.22); pointer-events:none;
 }
-.cs-cell.legal-capture { background:rgba(246,246,105,.6) !important; }
-.cs-cell.in-check { background:#ff6b6b !important; }
-.cs-cell:active { opacity:.8; }
-.cs-captured {
-  font-size:12px; text-align:center; color:rgba(255,255,255,.5);
-  min-height:18px; margin:2px 0; position:relative; z-index:1;
-  letter-spacing:1px;
+.cs-cell.legal-capture { outline:3px solid rgba(0,180,0,.6); outline-offset:-3px; }
+.cs-cell.in-check .cs-piece { background:#ef4444 !important; border-color:#fca5a5 !important; }
+.cs-cell:active { opacity:.85; }
+.cs-player-label {
+  display:flex; align-items:center; justify-content:center; gap:8px; padding:6px 4px;
+  font-family:'Baloo 2',sans-serif; font-size:13px; font-weight:700;
+  color:rgba(255,255,255,.7); position:relative; z-index:1;
 }
+.cs-player-you { color:#fff; margin-bottom:14px; }
+.cs-piece-dot {
+  width:20px; height:20px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:900;
+}
+.cs-piece-dot.white { background:#fff; color:transparent; text-shadow:0 0 0 #222; border:1.5px solid rgba(0,0,0,.3); }
+.cs-piece-dot.black { background:#222; color:transparent; text-shadow:0 0 0 #fff; border:1.5px solid rgba(255,255,255,.2); }
 
 /* ════════════════
    BATTLESHIPS
@@ -3581,9 +3622,11 @@ syncHtmlBg('loading');
       <div class="ttt-vs" id="csVs"></div>
       <div class="cs-turn-label" id="csTurn"></div>
     </div>
+    <div class="cs-player-label" id="csOppLabel"></div>
     <div class="cs-captured" id="csCapturedTop"></div>
     <div class="cs-board" id="csBoard"></div>
     <div class="cs-captured" id="csCapturedBot"></div>
+    <div class="cs-player-label cs-player-you" id="csMyLabel"></div>
     <div class="ttt-outcome" id="csOutcome" style="display:none">
       <div class="ttt-outcome-emoji" id="csOutcomeEmoji"></div>
       <div class="ttt-outcome-title" id="csOutcomeTitle"></div>
@@ -6484,6 +6527,21 @@ function startGameFlow(type) {
 async function createGame(type, oppId) {
   closeAllSheets();
 
+  // TEMP TEST — Chess
+  if(type === 'chess') {
+    const opp = MEMBERS.find(m => m.id === oppId);
+    const state = {board:["r","n","b","q","k","b","n","r","p","p","p","p","p","p","p","p",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","P","P","P","P","P","P","P","P","R","N","B","Q","K","B","N","R"],turn:'w',castling:'KQkq',enPassant:null};
+    currentCS = {id:'test',type:'chess',mySymbol:'X',oppId,board:[],myTurn:true,status:'active',state};
+    csSelected=null; csLegalCache=[];
+    document.getElementById('csVs').textContent = `${currentUser.avatar} ${currentUser.name} vs ${opp.avatar} ${opp.name}`;
+    document.getElementById('csCloseBtn').textContent = 'Close';
+    const outEl=document.getElementById('csOutcome'); if(outEl) outEl.style.display='none';
+    csRenderBoard(state, opp);
+    document.getElementById('csModal').classList.add('open');
+    return;
+  }
+  // END TEMP TEST
+
   if(!db.url || !db.key) { showToast('Supabase not connected'); return; }
   const opp = MEMBERS.find(m => m.id === oppId);
 
@@ -7453,9 +7511,10 @@ const CS_INIT_BOARD = [
   "R","N","B","Q","K","B","N","R",
 ];
 
-const CS_EMOJI = {
+// Same symbol for both colours — colour comes from circle background
+const CS_PIECE_LABEL = {
   "K":"♔","Q":"♕","R":"♖","B":"♗","N":"♘","P":"♙",
-  "k":"♚","q":"♛","r":"♜","b":"♝","n":"♞","p":"♟",
+  "k":"♔","q":"♕","r":"♖","b":"♗","n":"♘","p":"♙",
 };
 
 const csIsW  = p => p>="A"&&p<="Z";
@@ -7601,8 +7660,8 @@ function csRenderBoard(state, opp) {
       else if(isCapture)cls+=" legal-capture";
       else if(isLegal)cls+=" legal-move";
       if(isCheck)cls+=" in-check";
-      const emoji=csEmp(p)?"":CS_EMOJI[p]||p;
-      html+=`<div class="${cls}" onclick="csHandleClick(${sq})">${emoji}</div>`;
+      const piece=csEmp(p)?"":(`<div class="cs-piece ${csIsW(p)?"white":"black"}">${CS_PIECE_LABEL[p]||p}</div>`);
+      html+=`<div class="${cls}" onclick="csHandleClick(${sq})">${piece}</div>`;
     }
   }
   boardEl.innerHTML=html;
@@ -7617,6 +7676,14 @@ function csRenderBoard(state, opp) {
   const capturedBot=document.getElementById("csCapturedBot");
   if(capturedTop)capturedTop.textContent="";
   if(capturedBot)capturedBot.textContent="";
+
+  // Player side labels
+  const myDotCls = myColor==="w"?"white":"black";
+  const oppDotCls = myColor==="w"?"black":"white";
+  const myLabelEl  = document.getElementById('csMyLabel');
+  const oppLabelEl = document.getElementById('csOppLabel');
+  if(myLabelEl)  myLabelEl.innerHTML  = `<div class="cs-piece-dot ${myDotCls}">♙</div> You — ${myColor==="w"?"White":"Black"}`;
+  if(oppLabelEl) oppLabelEl.innerHTML = `<div class="cs-piece-dot ${oppDotCls}">♙</div> ${opp?.name||"Opponent"} — ${myColor==="w"?"Black":"White"}`;
 
   // Turn label
   const turnEl=document.getElementById("csTurn");
@@ -7665,6 +7732,7 @@ async function csMakeMove(from, to) {
   const newState=csApplyMove(currentCS.state,from,to);
   currentCS.state=newState;
   currentCS.myTurn=false;
+  csSelected=null; csLegalCache=[]; // clear highlight immediately
   const opp=MEMBERS.find(m=>m.id===currentCS.oppId);
 
   // Check game end conditions for opponent
@@ -8642,6 +8710,14 @@ function spinForfeitWheel() {
   forfeitSpun = true;
   const btn = document.getElementById('forfeitSpinBtn');
   if(btn) btn.disabled = true;
+
+  // Shuffle FORFEITS so the same number doesn't always map to the same forfeit
+  for(let i = FORFEITS.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [FORFEITS[i], FORFEITS[j]] = [FORFEITS[j], FORFEITS[i]];
+  }
+  // Redraw wheel with new order
+  drawForfeitWheel();
 
   // Pick random landing index
   forfeitLandedIndex = Math.floor(Math.random() * FORFEITS.length);
