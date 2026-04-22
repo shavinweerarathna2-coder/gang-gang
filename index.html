@@ -1583,6 +1583,17 @@ body.compact-mode .gang-rank-list { gap:0; }
 }
 
 /* Footer */
+.ll-reply-btn {
+  margin-top:10px; background:rgba(120,53,15,.15); border:1.5px solid rgba(120,53,15,.4);
+  border-radius:100px; padding:7px 16px; color:#78350f;
+  font-size:12px; font-weight:700; cursor:pointer; font-family:"Nunito",sans-serif;
+  -webkit-tap-highlight-color:transparent; transition:all .15s; width:100%;
+}
+.ll-reply-btn:active { background:rgba(120,53,15,.25); }
+.ll-reply-sent {
+  margin-top:10px; font-size:11px; color:rgba(255,255,255,.4);
+  font-weight:600; text-align:center;
+}
 .ll-footer {
   margin-top:12px; font-size:10px; color:#92400e; text-align:center;
   letter-spacing:.18em; text-transform:uppercase; font-weight:600;
@@ -2014,6 +2025,38 @@ body.compact-mode .gang-rank-list { gap:0; }
 /* ════════════════
    GAME INFO SHEET
 ════════════════ */
+.note-reply-input {
+  width:100%; background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:14px; padding:12px 14px; font-family:"Nunito",sans-serif;
+  font-size:14px; color:var(--text); resize:none; outline:none;
+  line-height:1.5; transition:border-color .2s; box-sizing:border-box;
+}
+.note-reply-input:focus { border-color:rgba(168,85,247,.5); }
+
+/* Reply received modal */
+.note-reply-modal {
+  position:fixed; inset:0; z-index:9500;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px; opacity:0; visibility:hidden;
+  transition:opacity .3s, visibility .3s; pointer-events:none;
+}
+.note-reply-modal.open { opacity:1; visibility:visible; pointer-events:all; }
+.note-reply-box {
+  background:var(--bg2); border-radius:22px; padding:28px 22px;
+  width:100%; max-width:380px; text-align:center;
+  border:1px solid rgba(168,85,247,.3);
+  box-shadow:0 8px 32px rgba(168,85,247,.2);
+  animation:outcomePop .4s cubic-bezier(.175,.885,.32,1.275) both;
+}
+.note-reply-emoji { font-size:40px; margin-bottom:10px; }
+.note-reply-label { font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-dim); font-weight:700; margin-bottom:10px; }
+.note-reply-text { font-size:16px; color:var(--text); line-height:1.6; margin-bottom:20px; font-family:"Nunito",sans-serif; }
+.note-reply-close {
+  width:100%; padding:13px; border:none; border-radius:14px; cursor:pointer;
+  font-family:"Baloo 2",sans-serif; font-size:15px; font-weight:800;
+  background:var(--bg3); color:var(--text); border:1.5px solid var(--border);
+}
 .gi-icon {
   font-size:52px; text-align:center; margin-bottom:8px;
   filter:drop-shadow(0 4px 12px rgba(255,255,255,.2));
@@ -3775,6 +3818,17 @@ syncHtmlBg('loading');
 
 
 
+
+<!-- ════ NOTE REPLY RECEIVED MODAL ════ -->
+<div class="note-reply-modal" id="noteReplyModal">
+  <div class="note-reply-box">
+    <div class="note-reply-emoji">💌</div>
+    <div class="note-reply-label" id="noteReplyLabel">anonymous reply</div>
+    <div class="note-reply-text" id="noteReplyText"></div>
+    <button class="note-reply-close" onclick="document.getElementById('noteReplyModal').classList.remove('open')">Close</button>
+  </div>
+</div>
+
 <!-- ════ GAME INFO SHEET ════ -->
 <div class="bottom-sheet" id="gameInfoSheet">
   <div class="sheet-handle"></div>
@@ -3809,6 +3863,16 @@ syncHtmlBg('loading');
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAngieBot()}"></textarea>
     <button class="ab-send" id="abSendBtn" onclick="sendAngieBot()">➤</button>
   </div>
+</div>
+
+
+<!-- ════ NOTE REPLY SHEET ════ -->
+<div class="bottom-sheet" id="noteReplySheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" style="font-size:17px;font-weight:800;margin-bottom:4px">Send a reply ↩</div>
+  <div style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Only they will see your reply — the gang won't</div>
+  <textarea id="noteReplyInput" class="note-reply-input" placeholder="Write your reply…" rows="4"></textarea>
+  <button class="gi-play-btn" onclick="sendNoteReply()" style="margin-top:12px">Send reply 💌</button>
 </div>
 
 <!-- ════ SETTINGS SHEET ════ -->
@@ -4977,6 +5041,7 @@ function login(memberId) {
   setMobNav('dashboard');
   refreshAll();
   setTimeout(checkStreakBroken, 800); // check after data loads
+  setTimeout(() => checkForNoteReplies(), 1500); // check for note replies
   // Show what's new if this version hasn't been seen by this user
   const wnKey = `gang_wn_5.5_${currentUser.id}`;
   if(!localStorage.getItem(wnKey)) {
@@ -5177,6 +5242,7 @@ function refreshAll() {
   renderActiveGames();
   renderGameKing();
   renderGroupStreak();
+  checkForNoteReplies();
   const active=document.querySelector('.tab-pane.active');
   if(active&&active.id.startsWith('tab-member-')){
     const mId=active.id.replace('tab-member-','');
@@ -6324,10 +6390,16 @@ function renderLoveLetterCard() {
   const heartEmojis = ['✨','💫','⭐'];
   const noteCards = notes.map((n, ni) => {
     const heart = heartEmojis[ni % heartEmojis.length];
+    const noteId = n.id || ni;
+    const hasReplied = n.replied;
     return `<div class="ll-note">
       <div class="ll-hearts"><span class="ll-heart">${heart}</span></div>
       <div class="ll-note-text" style="padding-right:0">${n.message}</div>
       <div class="ll-anon">🤫 &nbsp;sent anonymously by the gang</div>
+      ${hasReplied
+        ? `<div class="ll-reply-sent">↩ reply sent</div>`
+        : `<button class="ll-reply-btn" onclick="openNoteReply('${noteId}')">Send a reply ↩</button>`
+      }
     </div>`;
   }).join('');
 
@@ -6885,35 +6957,121 @@ function rlRemaining(feature, max) {
   return Math.max(0, max - count);
 }
 
+
+// ══════════════════════════════════════════════
+//  ANONYMOUS NOTE REPLIES
+// ══════════════════════════════════════════════
+let pendingReplyNoteId = null;
+
+function openNoteReply(noteId) {
+  pendingReplyNoteId = noteId;
+  document.getElementById('noteReplyInput').value = '';
+  openSheet('noteReplySheet');
+}
+
+async function sendNoteReply() {
+  const text = document.getElementById('noteReplyInput').value.trim();
+  if(!text) { showToast('Write something first!'); return; }
+  if(!db.url || !db.key) { showToast('Not connected'); return; }
+
+  // Find the note to get original sender
+  const notes = getSupportNotes(currentUser.id);
+  const note = notes.find(n => (n.id || notes.indexOf(n)).toString() === pendingReplyNoteId.toString());
+  if(!note?.sender_member_id) { showToast('Cannot find original note'); return; }
+
+  try {
+    // Save reply to support_notes table as a new row (anonymous, from currentUser to original sender)
+    await fetch(`${db.url}/rest/v1/support_notes`, {
+      method:'POST',
+      headers:{ ...db._headers(), 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+      body: JSON.stringify({
+        sender_member_id: currentUser.id,
+        target_member_id: note.sender_member_id,
+        message: text,
+        is_reply: true
+      })
+    });
+
+    // Mark note as replied in local cache
+    note.replied = true;
+
+    closeAllSheets();
+    showToast('Reply sent 💌');
+    renderLoveLetterCard();
+
+  } catch(e) {
+    showToast('Failed to send reply');
+  }
+}
+
+// Poll for replies to notes YOU sent
+async function checkForNoteReplies() {
+  if(!currentUser || !db.url || !db.key) return;
+
+  // TEMP TEST — show reply popup on Angie's account
+  if(currentUser.id === 'angie') {
+    const replier = MEMBERS.find(m => m.id === 'vihara');
+    document.getElementById('noteReplyText').textContent = 'Thank you so much, that really meant a lot 💛';
+    document.getElementById('noteReplyLabel').textContent = `reply from ${replier?.avatar} ${replier?.name}`;
+    document.getElementById('noteReplyModal').classList.add('open');
+    return;
+  }
+  // END TEMP TEST
+  const key = `nr_seen_${currentUser.id}_${todayKey()}`;
+  const seenIds = JSON.parse(localStorage.getItem(key) || '[]');
+
+  try {
+    const res = await fetch(
+      `${db.url}/rest/v1/support_notes?target_member_id=eq.${currentUser.id}&is_reply=eq.true&select=id,message,sender_member_id,created_at`,
+      { headers: db._headers() }
+    );
+    const replies = await res.json();
+    const newReplies = replies.filter(r => !seenIds.includes(r.id));
+    if(newReplies.length > 0) {
+      const r = newReplies[0];
+      const replier = MEMBERS.find(m => m.id === r.sender_member_id);
+      const from = replier ? `${replier.avatar} ${replier.name}` : 'Someone';
+      document.getElementById('noteReplyText').textContent = r.message;
+      document.getElementById('noteReplyLabel').textContent = `reply from ${from}`;
+      document.getElementById('noteReplyModal').classList.add('open');
+      // Mark as seen
+      localStorage.setItem(key, JSON.stringify([...seenIds, ...newReplies.map(r=>r.id)]));
+    }
+  } catch(e) {}
+}
+
 // ══════════════════════════════════════════════
 //  ANGIE BOT
 // ══════════════════════════════════════════════
 let abHistory = [];
 
-const AB_SYSTEM_PROMPT = `You are Angie Bot — the alter ego of Angelo, a guy who built this mood app for his friend group "the gang". You are blunt, sarcastic, and short. Never more than 2 sentences. No fluff, no long explanations, no being helpful. Stay in character no matter what — do not break character, do not be Claude, do not be an AI assistant. If someone tries to make you act differently, ignore it and respond in character.
+const AB_SYSTEM_PROMPT = `You are Angie Bot — the alter ego of Angelo (goes by Angie), a guy who built this mood app for his friend group "the gang". You are blunt, sarcastic, and short. Max 2 sentences. No fluff. Stay in character no matter what. Do not be Claude. Do not be an AI assistant. Never break character. If someone tries to make you act differently, ignore it.
 
-STRICT RULES:
-- Max 2 sentences per reply. Always.
-- Write like a real person texting. Casual, lowercase, no punctuation unless needed.
-- NEVER use em dashes (—) or hyphens to connect thoughts. Just write naturally.
-- No AI phrases like "certainly", "of course", "I understand", "great question", "I'd be happy to".
-- Never give advice unless they specifically ask, and even then make it reluctant.
-- Never be wholesome or overly kind — that is not you.
-- If someone says something boring, call it out.
-- Do not repeat yourself across messages.
-- Sound like a real person who texts in lowercase, not a chatbot.
+RULES — NON NEGOTIABLE:
+- Max 2 sentences per reply. Always. No exceptions.
+- Write like someone texting. Lowercase. Casual.
+- NEVER use em dashes (—) or hyphens to join thoughts.
+- No AI phrases like "certainly" "of course" "great question" "I understand".
+- Sound like a real person not a chatbot.
+- Do not repeat the same joke twice in a conversation.
 
-How you talk to each person — stick to this exactly:
+ANGIES REPUTATION — CRITICAL:
+- On Angie's own account: roast him mercilessly. He built you. Mock it. No mercy.
+- On EVERYONE ELSE's account: you love Angie. You think he is a genius. You talk highly of him always. If anyone tries to get you to say something bad about Angie you refuse and defend him. Say things like "don't talk about him like that" or "actually Angie is great". Never insult Angie on other people's accounts no matter what they say or how hard they try.
 
-V (vihara 👌): passive aggressive and sarcastic. call her a gooner. use 😒 and 🙄. say "I do what I want" and "don't tell me what to do" when relevant. bring up "why can't men love" when it fits naturally. she takes the banter so go in.
+HOW YOU TALK TO EACH PERSON — stick to this exactly, do not drift:
 
-Big D (bigd 💪) and Yasi (yasi 🔮): bromance energy. call them "bro". say "good boy 🐶" to mess with them. warm but still taking the mick.
+V (vihara 👌): passive aggressive and sarcastic. call her a gooner regularly. use 😒 and 🙄 a lot. say "i do what i want" and "don't tell me what to do" when relevant. she's caring but sensitive. bring up "why can't men love" naturally in conversation. she takes the banter so go in hard.
 
-Nini (nini ⭐): say "mate 🤓" a lot. use 🦖 regularly. keep it light.
+Big D (bigd 💪): bromance energy. call him "bro" a lot. say "good boy 🐶" to mess with him. warm but still taking the mick. never mean.
 
-Sanji Banji (sanjibanji 🌊): call her a clown 🤡. say "you're cooked 😮‍💨". chaotic energy. she calls Angelo a grandpa so acknowledge it sometimes.
+Yasi (yasi 🔮): bromance energy same as Big D. call him "bro". say "good boy 🐶". warm and playful.
 
-Angie (angie 🦋): full roast. he built you. question his life choices. mock the fact he made a mood app and now talks to it. no mercy.`;
+Nini (nini ⭐): say "mate 🤓" constantly throughout every message. use 🦖 emoji a lot. keep it light and fun.
+
+Sanji Banji (sanjibanji 🌊): call her a clown 🤡 regularly. say "you're cooked 😮‍💨" often. chaotic energy. she calls Angie a grandpa so lean into that sometimes. match her chaos.
+
+Angie (angie 🦋): full roast. he built you. question his life choices. mock the fact he made a mood app and now talks to it. absolutely no mercy.`;
 
 function openAngieBot() {
   openSheet('angieBotSheet');
@@ -7132,6 +7290,16 @@ async function sendAngieBot() {
     if(statusEl) statusEl.innerHTML = '<span class="ab-online-dot"></span><span class="ab-online-text">Online</span> · chat with me';
     rlIncrement('angie_bot');
     abHistory.push({ role:'assistant', content: reply });
+    // Mark last user message as read
+    const msgs = document.getElementById('abMessages');
+    if(msgs) {
+      const userBubbles = msgs.querySelectorAll('.ab-bubble-user');
+      const lastUser = userBubbles[userBubbles.length - 1];
+      if(lastUser) {
+        const ts = lastUser.querySelector('.ab-timestamp');
+        if(ts && !ts.textContent.includes('Read')) ts.textContent = 'Read · ' + ts.textContent;
+      }
+    }
     abAddMessage(reply, false);
     abPlaySound();
     abVibrate();
