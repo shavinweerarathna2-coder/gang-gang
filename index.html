@@ -4533,15 +4533,16 @@ const db = {
     try {
       const cutoff = todayKey() + 'T00:00:00.000Z';
       const res = await fetch(
-        `${this.url}/rest/v1/support_notes?select=id,target_member_id,message,created_at&created_at=gte.${cutoff}`,
+        `${this.url}/rest/v1/support_notes?select=id,target_member_id,sender_member_id,message,created_at,is_reply&created_at=gte.${cutoff}`,
         { headers: this._headers(), cache: 'no-store' }
       );
       if(!res.ok) return;
       const rows = await res.json();
       this._notesCache = {};
       rows.forEach(r => {
+        if(r.is_reply) return; // skip replies — they are handled separately
         if(!this._notesCache[r.target_member_id]) this._notesCache[r.target_member_id] = [];
-        this._notesCache[r.target_member_id].push({ message: r.message, ts: new Date(r.created_at).getTime(), id: r.id });
+        this._notesCache[r.target_member_id].push({ message: r.message, ts: new Date(r.created_at).getTime(), id: r.id, sender_member_id: r.sender_member_id });
       });
     } catch(e) { /* silent */ }
   },
@@ -6391,14 +6392,15 @@ function renderLoveLetterCard() {
   const noteCards = notes.map((n, ni) => {
     const heart = heartEmojis[ni % heartEmojis.length];
     const noteId = n.id || ni;
-    const hasReplied = n.replied;
+    const repliedKey = `nr_replied_${currentUser?.id}_${noteId}`;
+    const hasReplied = localStorage.getItem(repliedKey) || n.replied;
     return `<div class="ll-note">
       <div class="ll-hearts"><span class="ll-heart">${heart}</span></div>
       <div class="ll-note-text" style="padding-right:0">${n.message}</div>
       <div class="ll-anon">🤫 &nbsp;sent anonymously by the gang</div>
       ${hasReplied
-        ? `<div class="ll-reply-sent">↩ reply sent</div>`
-        : `<button class="ll-reply-btn" onclick="openNoteReply('${noteId}')">Send a reply ↩</button>`
+        ? ''
+        : `<button class="ll-reply-btn" onclick="openNoteReply('${noteId}', '${n.sender_member_id||''}')">Send a reply ↩</button>`
       }
     </div>`;
   }).join('');
@@ -6962,9 +6964,11 @@ function rlRemaining(feature, max) {
 //  ANONYMOUS NOTE REPLIES
 // ══════════════════════════════════════════════
 let pendingReplyNoteId = null;
+let pendingReplySenderId = null;
 
-function openNoteReply(noteId) {
+function openNoteReply(noteId, senderId) {
   pendingReplyNoteId = noteId;
+  pendingReplySenderId = senderId;
   document.getElementById('noteReplyInput').value = '';
   openSheet('noteReplySheet');
 }
@@ -6974,26 +6978,20 @@ async function sendNoteReply() {
   if(!text) { showToast('Write something first!'); return; }
   if(!db.url || !db.key) { showToast('Not connected'); return; }
 
-  // Find the note to get original sender
-  const notes = getSupportNotes(currentUser.id);
-  const note = notes.find(n => (n.id || notes.indexOf(n)).toString() === pendingReplyNoteId.toString());
-  if(!note?.sender_member_id) { showToast('Cannot find original note'); return; }
+  if(!pendingReplySenderId) { showToast('Cannot find original sender'); return; }
 
   try {
-    // Save reply to support_notes table as a new row (anonymous, from currentUser to original sender)
     await fetch(`${db.url}/rest/v1/support_notes`, {
       method:'POST',
       headers:{ ...db._headers(), 'Content-Type':'application/json', 'Prefer':'return=minimal' },
       body: JSON.stringify({
         sender_member_id: currentUser.id,
-        target_member_id: note.sender_member_id,
+        target_member_id: pendingReplySenderId,
         message: text,
         is_reply: true
       })
     });
-
-    // Mark note as replied in local cache
-    note.replied = true;
+    localStorage.setItem(`nr_replied_${currentUser.id}_${pendingReplyNoteId}`, '1');
 
     closeAllSheets();
     showToast('Reply sent 💌');
@@ -7008,21 +7006,12 @@ async function sendNoteReply() {
 async function checkForNoteReplies() {
   if(!currentUser || !db.url || !db.key) return;
 
-  // TEMP TEST — show reply popup on Angie's account
-  if(currentUser.id === 'angie') {
-    const replier = MEMBERS.find(m => m.id === 'vihara');
-    document.getElementById('noteReplyText').textContent = 'Thank you so much, that really meant a lot 💛';
-    document.getElementById('noteReplyLabel').textContent = `reply from ${replier?.avatar} ${replier?.name}`;
-    document.getElementById('noteReplyModal').classList.add('open');
-    return;
-  }
-  // END TEMP TEST
   const key = `nr_seen_${currentUser.id}_${todayKey()}`;
   const seenIds = JSON.parse(localStorage.getItem(key) || '[]');
 
   try {
     const res = await fetch(
-      `${db.url}/rest/v1/support_notes?target_member_id=eq.${currentUser.id}&is_reply=eq.true&select=id,message,sender_member_id,created_at`,
+      `${db.url}/rest/v1/support_notes?target_member_id=eq.${currentUser.id}&is_reply=eq.true&select=id,message,sender_member_id,created_at&order=created_at.desc`,
       { headers: db._headers() }
     );
     const replies = await res.json();
