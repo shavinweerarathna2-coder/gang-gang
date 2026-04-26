@@ -2242,6 +2242,17 @@ body.compact-mode .gang-rank-list { gap:0; }
 @keyframes crownFloat { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-6px) rotate(5deg)} }
 @keyframes kingShimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
 
+.gq-scroll-wrap {
+  overflow:hidden; border-radius:18px;
+}
+.gq-scroll {
+  display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+  scrollbar-width:none; gap:10px;
+}
+.gq-scroll::-webkit-scrollbar { display:none; }
+.gq-snap-panel {
+  flex:0 0 100%; scroll-snap-align:start;
+}
 .game-queen-card {
   position:relative; overflow:hidden;
   background:linear-gradient(135deg,#1c0a00 0%,#2d1500 40%,#1c0a00 100%);
@@ -2470,7 +2481,7 @@ body.compact-mode .gang-rank-list { gap:0; }
   text-align:center; position:relative; z-index:1;
 }
 .uno-hand {
-  display:flex; gap:6px; overflow-x:auto; padding:10px 4px 4px;
+  display:flex; gap:6px; overflow-x:auto; padding:10px 4px 18px;
   scrollbar-width:none; position:relative; z-index:1; justify-content:center;
   flex-wrap:wrap;
 }
@@ -2522,17 +2533,17 @@ body.compact-mode .gang-rank-list { gap:0; }
 
 /* Board */
 .sp-board {
-  display:grid; grid-template-columns:repeat(4,1fr);
-  gap:5px; margin:0 auto 12px; max-width:310px;
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:6px; margin:0 auto 12px; max-width:270px;
   background:rgba(0,0,0,.3); border-radius:16px; padding:8px;
   position:relative; z-index:1;
   border:1.5px solid rgba(20,184,166,.2);
 }
 .sp-tile {
-  aspect-ratio:1; border-radius:12px; display:flex;
+  aspect-ratio:1; border-radius:14px; display:flex;
   align-items:center; justify-content:center; flex-direction:column;
   cursor:pointer; transition:transform .12s, opacity .12s;
-  min-height:60px; -webkit-tap-highlight-color:transparent;
+  min-height:72px; -webkit-tap-highlight-color:transparent;
   color:#fff; position:relative; overflow:hidden;
 }
 .sp-tile::after {
@@ -2549,13 +2560,13 @@ body.compact-mode .gang-rank-list { gap:0; }
 .sp-tile.in-place { outline:3px solid rgba(255,255,255,.5); outline-offset:-3px; }
 .sp-tile.solved { filter:brightness(1.1); }
 .sp-tile-num {
-  font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:900;
+  font-family:'Baloo 2',sans-serif; font-size:24px; font-weight:900;
   color:rgba(255,255,255,.9); text-shadow:0 1px 4px rgba(0,0,0,.4);
   position:relative; z-index:1;
 }
 .sp-status {
   text-align:center; font-size:13px; color:rgba(255,255,255,.5);
-  margin-bottom:10px; position:relative; z-index:1; font-weight:600;
+  margin-bottom:18px; position:relative; z-index:1; font-weight:600;
 }
 
 /* ════════════════
@@ -6908,7 +6919,7 @@ async function createGame(type, oppId) {
   const xh=deck.splice(0,7),oh=deck.splice(0,7);
   let top=deck.pop();while(top&&(top.val==='wild'||top.val==='wild4')){deck.unshift(top);top=deck.pop();}
   return JSON.stringify({x_hand:xh,o_hand:oh,deck,discard_top:top,discard_colour:top?.col,x_drew:false,o_drew:false});
-})() : type==="sp" ? (()=>{ const S=x=>[...Array(15).keys()].map(i=>i+1).concat([0]); const sh=t=>{const a=[...t];let ok=false;while(!ok){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}let inv=0;const f=a.filter(x=>x!==0);for(let i=0;i<f.length;i++)for(let j=i+1;j<f.length;j++)if(f[i]>f[j])inv++;const br=Math.floor(a.indexOf(0)/4);ok=(inv+(4-br))%2===0&&!a.every((v,i)=>v===[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0][i]);}return a;}; return JSON.stringify({x_tiles:sh(S()),o_tiles:sh(S()),x_moves:0,o_moves:0}); })() : type==="chess" ? JSON.stringify({board:["r","n","b","q","k","b","n","r","p","p","p","p","p","p","p","p",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","P","P","P","P","P","P","P","P","R","N","B","Q","K","B","N","R"],turn:"w",castling:"KQkq",enPassant:null}) : type==="21" ? (()=>{ const S=['♠','♣','♥','♦']; const V=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; const cv=v=>v==='A'?11:['J','Q','K'].includes(v)?10:parseInt(v); const deal=()=>{let cards,total;do{cards=[{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]},{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]}];total=cards.reduce((s,c)=>s+cv(c.val),0);let a=cards.filter(c=>c.val==='A').length;while(total>21&&a>0){total-=10;a--;}}while(total>=17);return cards;}; return JSON.stringify({x_cards:deal(),o_cards:deal(),x_stood:false,o_stood:false,finished:false});})() : JSON.stringify(Array(9).fill('')),
+})() : type==="sp" ? (()=>{ const S=x=>[...Array(8).keys()].map(i=>i+1).concat([0]); const sh=t=>{const a=[...t];let ok=false;while(!ok){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}let inv=0;const f=a.filter(x=>x!==0);for(let i=0;i<f.length;i++)for(let j=i+1;j<f.length;j++)if(f[i]>f[j])inv++;ok=inv%2===0&&!a.every((v,i)=>v===[1,2,3,4,5,6,7,8,0][i]);}return a;}; return JSON.stringify({x_tiles:sh(S()),o_tiles:sh(S()),x_moves:0,o_moves:0}); })() : type==="chess" ? JSON.stringify({board:["r","n","b","q","k","b","n","r","p","p","p","p","p","p","p","p",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".",".","P","P","P","P","P","P","P","P","R","N","B","Q","K","B","N","R"],turn:"w",castling:"KQkq",enPassant:null}) : type==="21" ? (()=>{ const S=['♠','♣','♥','♦']; const V=['A','2','3','4','5','6','7','8','9','10','J','Q','K']; const cv=v=>v==='A'?11:['J','Q','K'].includes(v)?10:parseInt(v); const deal=()=>{let cards,total;do{cards=[{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]},{suit:S[Math.floor(Math.random()*4)],val:V[Math.floor(Math.random()*13)]}];total=cards.reduce((s,c)=>s+cv(c.val),0);let a=cards.filter(c=>c.val==='A').length;while(total>21&&a>0){total-=10;a--;}}while(total>=17);return cards;}; return JSON.stringify({x_cards:deal(),o_cards:deal(),x_stood:false,o_stood:false,finished:false});})() : JSON.stringify(Array(9).fill('')),
         current_turn: currentUser.id,
         status: 'pending',
         winner: null,
@@ -6960,7 +6971,7 @@ async function renderActiveGames() {
       let status = myTurn ? "Your turn! 👉" : `${opp?.name}'s turn`;
       if(isPending) status = "Tap to accept challenge 🎮";
       return `<div class="active-game-row" onclick="openGame('${g.id}')">
-        <div class="agr-icon">${g.type==='c4'?'🔴':g.type==='rps'?'✊':g.type==='21'?'🃏':g.type==='bs'?'🚢':g.type==='chess'?'♟️':g.type==='sp'?'🧩':g.type==='uno'?'🃏':'⭕'}</div>
+        <div class="agr-icon">${g.type==='c4'?'🔴':g.type==='rps'?'✊':g.type==='21'?'🃏':g.type==='bs'?'🚢':g.type==='chess'?'♟️':g.type==='sp'?'🧩':g.type==='uno'?'🎯':'⭕'}</div>
         <div class="agr-info">
           <div class="agr-name">${currentUser.avatar} ${currentUser.name} <span class="agr-vs">vs</span> ${opp?.avatar} ${opp?.name}</div>
           <div class="agr-status">${status}</div>
@@ -7298,14 +7309,8 @@ async function checkForNoteReplies() {
       const from = replier ? `${replier.avatar} ${replier.name}` : 'Someone';
       document.getElementById('noteReplyText').textContent = r.message;
       document.getElementById('noteReplyLabel').textContent = `reply from ${from}`;
-      // Mark as seen when close button is tapped
-      const closeBtn = document.querySelector('#noteReplyModal .note-reply-close');
-      if(closeBtn) {
-        closeBtn.onclick = () => {
-          document.getElementById('noteReplyModal').classList.remove('open');
-          localStorage.setItem(key, JSON.stringify([...seenIds, r.id]));
-        };
-      }
+      // Mark as seen immediately so it never shows again regardless of how they close
+      localStorage.setItem(key, JSON.stringify([...seenIds, r.id]));
       document.getElementById('noteReplyModal').classList.add('open');
     }
   } catch(e) {}
@@ -7597,60 +7602,45 @@ async function renderGameKing() {
   const slot = document.getElementById('gameKingSlot');
   if(!slot) return;
 
-  // Show empty state immediately while loading
-  slot.innerHTML = `<div class="game-queen-card">
-    <div class="gq-inner">
-      <div class="gq-crown">👑</div>
-      <div class="gq-info">
-        <div class="gq-label">Game Queen</div>
-        <div class="gq-empty">No games finished yet — be the first to win!</div>
-      </div>
-    </div>
-  </div>`;
+  slot.innerHTML = `<div class="game-queen-card"><div class="gq-inner"><div class="gq-crown">👑</div><div class="gq-info"><div class="gq-label">Game Queen</div><div class="gq-empty">Loading…</div></div></div></div>`;
 
   if(!db.url || !db.key) return;
 
   try {
-    // Only count wins from the current calendar month
     const now = new Date();
     const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
     const res = await fetch(
-      `${db.url}/rest/v1/game_sessions?status=eq.finished&select=winner&created_at=gte.${monthStart}T00:00:00.000Z`,
+      `${db.url}/rest/v1/game_sessions?status=eq.finished&select=winner,type&created_at=gte.${monthStart}T00:00:00.000Z`,
       { headers: db._headers() }
     );
     if(!res.ok) { slot.innerHTML=''; return; }
     const rows = await res.json();
 
-    // Count wins per member (exclude draws)
     const wins = {};
-    rows.forEach(r => {
-      if(r.winner && r.winner !== 'draw') {
-        wins[r.winner] = (wins[r.winner] || 0) + 1;
-      }
-    });
+    rows.forEach(r => { if(r.winner && r.winner!=='draw') wins[r.winner]=(wins[r.winner]||0)+1; });
 
     if(!Object.keys(wins).length) {
-      slot.innerHTML = `<div class="game-queen-card">
-        <div class="gq-inner">
-          <div class="gq-crown">👑</div>
-          <div class="gq-info">
-            <div class="gq-label">Game Queen</div>
-            <div class="gq-empty">No games finished yet — be the first to win!</div>
-          </div>
-        </div>
-      </div>`;
+      slot.innerHTML = `<div class="game-queen-card"><div class="gq-inner"><div class="gq-crown">👑</div><div class="gq-info"><div class="gq-label">Game Queen</div><div class="gq-empty">No games finished yet — be the first to win!</div></div></div></div>`;
       return;
     }
 
-    const topId = Object.keys(wins).sort((a,b) => wins[b]-wins[a])[0];
-    const king  = MEMBERS.find(m => m.id === topId);
-    if(!king) return;
-
+    const topId    = Object.keys(wins).sort((a,b)=>wins[b]-wins[a])[0];
+    const king     = MEMBERS.find(m=>m.id===topId);
+    const winCount = wins[topId];
     const totalGames = rows.length;
-    const winCount   = wins[topId];
-    const losses     = Object.values(wins).reduce((a,b) => a+b, 0);
 
-    slot.innerHTML = `<div class="game-queen-card">
+    const GAME_NAMES = {ttt:'Noughts & Crosses',c4:'Connect 4',rps:'Rock Paper Scissors',bs:'Battleships','21':'Black Jack',chess:'Chess',sp:'Sliding Puzzle',uno:'Uno'};
+    const GAME_ICONS = {ttt:'⭕',c4:'🔴',rps:'✊',bs:'🚢','21':'🃏',chess:'♟️',sp:'🧩',uno:'🎯'};
+
+    const byGame = {};
+    rows.forEach(r => {
+      if(!r.winner||r.winner==='draw') return;
+      if(!byGame[r.type]) byGame[r.type]={};
+      byGame[r.type][r.winner]=(byGame[r.type][r.winner]||0)+1;
+    });
+
+    // Overall panel
+    const overallPanel = `<div class="game-queen-card gq-snap-panel">
       <div class="gq-inner">
         <div class="gq-crown">👑</div>
         <div class="gq-info">
@@ -7661,6 +7651,28 @@ async function renderGameKing() {
         <div class="gq-wins">${winCount}<span>wins</span></div>
       </div>
     </div>`;
+
+    // Per-game panels
+    const gamePanels = Object.entries(byGame).map(([type, gameWins]) => {
+      const topWinnerId = Object.keys(gameWins).sort((a,b)=>gameWins[b]-gameWins[a])[0];
+      const winner = MEMBERS.find(m=>m.id===topWinnerId);
+      if(!winner) return '';
+      const gw = gameWins[topWinnerId];
+      const played = Object.values(gameWins).reduce((a,b)=>a+b,0);
+      return `<div class="game-queen-card gq-snap-panel">
+        <div class="gq-inner">
+          <div class="gq-crown">${GAME_ICONS[type]||'🎮'}</div>
+          <div class="gq-info">
+            <div class="gq-label">${GAME_NAMES[type]||type}</div>
+            <div class="gq-name">${winner.avatar} ${winner.name}</div>
+            <div class="gq-stats">${gw} win${gw!==1?'s':''} · ${played} game${played!==1?'s':''} played</div>
+          </div>
+          <div class="gq-wins">${gw}<span>wins</span></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    slot.innerHTML = `<div class="gq-scroll-wrap"><div class="gq-scroll">${overallPanel}${gamePanels}</div></div>`;
   } catch(e) { slot.innerHTML=''; }
 }
 
@@ -7870,7 +7882,7 @@ const GAME_INFO = {
     ]
   },
   uno: {
-    icon: '🃏', name: 'Uno',
+    icon: '🎯', name: 'Uno',
     aim: 'Be the first to play all your cards.',
     rules: [
       { icon:'🃏', text:'You each get 7 cards. Match the top card by colour or number to play.' },
@@ -7882,7 +7894,7 @@ const GAME_INFO = {
     icon: '🧩', name: 'Sliding Puzzle',
     aim: 'Arrange the tiles in order using the fewest moves.',
     rules: [
-      { icon:'🧩', text:'You each get your own 4x4 puzzle with tiles numbered 1 to 15.' },
+      { icon:'🧩', text:'You each get your own 3x3 puzzle with tiles numbered 1 to 8.' },
       { icon:'👆', text:'Tap a tile next to the empty space to slide it. Take turns — one slide per turn.' },
       { icon:'🏆', text:'First to solve their puzzle wins. If both solve it, fewest moves wins.' },
     ]
@@ -8224,7 +8236,7 @@ function closeUno(){
 let currentSP   = null;
 let spPollTimer = null;
 
-const SP_SIZE = 4; // 4x4 grid
+const SP_SIZE = 3; // 3x3 grid
 const SP_GOAL = [...Array(SP_SIZE*SP_SIZE-1).keys()].map(i=>i+1).concat([0]); // 1-15, 0=empty
 
 function spShuffle(tiles) {
@@ -8240,13 +8252,11 @@ function spShuffle(tiles) {
 }
 
 function spIsSolvable(tiles) {
-  // Count inversions — puzzle is solvable if inversions + blank row from bottom is even
+  // For odd grid size (3x3), puzzle is solvable if inversion count is even
   let inv=0;
   const flat=tiles.filter(x=>x!==0);
   for(let i=0;i<flat.length;i++)for(let j=i+1;j<flat.length;j++)if(flat[i]>flat[j])inv++;
-  const blankRow = Math.floor(tiles.indexOf(0)/SP_SIZE);
-  const fromBottom = SP_SIZE - blankRow;
-  return SP_SIZE%2===1 ? inv%2===0 : (inv+fromBottom)%2===0;
+  return inv%2===0;
 }
 
 function spIsSolved(tiles) {
@@ -8268,9 +8278,7 @@ function spGetAdjacentToEmpty(tiles) {
 const SP_COLOURS = [
   null, // index 0 unused
   '#ef4444','#f97316','#f59e0b','#eab308',
-  '#84cc16','#22c55e','#10b981','#14b8a6',
-  '#06b6d4','#3b82f6','#6366f1','#8b5cf6',
-  '#a855f7','#ec4899','#f43f5e'
+  '#22c55e','#14b8a6','#6366f1','#ec4899',
 ];
 
 function spRenderBoard(tiles, canMove) {
