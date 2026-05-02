@@ -2243,15 +2243,15 @@ body.compact-mode .gang-rank-list { gap:0; }
 @keyframes kingShimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
 
 .gq-scroll-wrap {
-  overflow:hidden; border-radius:18px;
+  overflow:hidden; border-radius:18px; position:relative;
 }
 .gq-scroll {
   display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
-  scrollbar-width:none; gap:10px;
+  scrollbar-width:none; gap:0; overflow-y:hidden;
 }
 .gq-scroll::-webkit-scrollbar { display:none; }
 .gq-snap-panel {
-  flex:0 0 100%; scroll-snap-align:start;
+  flex:0 0 100%; scroll-snap-align:start; min-width:100%;
 }
 .game-queen-card {
   position:relative; overflow:hidden;
@@ -6658,7 +6658,7 @@ function renderSupportNotes(memberId) {
 function renderLoveLetterCard() {
   const slot = document.getElementById('loveletterSlot');
   if(!slot || !currentUser) return;
-  const notes = getSupportNotes(currentUser.id);
+  let notes = getSupportNotes(currentUser.id);
   if(!notes.length) { slot.innerHTML=''; return; }
 
   const heartEmojis = ['✨','💫','⭐'];
@@ -8073,6 +8073,13 @@ async function unoPlay(cardIdx) {
   const card  = state[myKey+'_hand'][cardIdx];
   if(!card) return;
 
+  // Block power card if it would be the last card played
+  const isPowerCard = ['skip','reverse','draw2','wild','wild4'].includes(card.val);
+  if(isPowerCard && state[myKey+'_hand'].length === 1) {
+    showToast('🚫 Can\'t end on a power card — draw first');
+    return;
+  }
+
   // Wild — pick colour first
   if(card.val==='wild'||card.val==='wild4'){
     unoPendingWild=cardIdx;
@@ -8100,35 +8107,49 @@ async function unoApplyPlay(cardIdx, chosenColour) {
   state[myKey+'_drew'] = false;
 
   const opp=MEMBERS.find(m=>m.id===currentUno.oppId);
-  let nextTurn=currentUno.oppId; // default pass to opponent
+  const isPowerCard = ['skip','reverse','draw2','wild','wild4'].includes(card.val);
+  let nextTurn=currentUno.oppId;
 
   // Handle special cards
   if(card.val==='draw2'){
-    // Opponent draws 2 and loses turn
     for(let i=0;i<2;i++){
       if(state.deck.length===0) state.deck=unoDeckShuffle([state.discard_top,...(state.discard||[])]);
       const drawn=state.deck.pop();
       if(drawn) state[oppKey+'_hand'].push(drawn);
     }
-    nextTurn=currentUser.id; // skip opp
+    nextTurn=currentUser.id;
   } else if(card.val==='wild4'){
-    // Opponent draws 4 and loses turn
     for(let i=0;i<4;i++){
       if(state.deck.length===0) state.deck=unoDeckShuffle([state.discard_top,...(state.discard||[])]);
       const drawn=state.deck.pop();
       if(drawn) state[oppKey+'_hand'].push(drawn);
     }
-    nextTurn=currentUser.id; // skip opp
+    nextTurn=currentUser.id;
   } else if(card.val==='skip'||card.val==='reverse'){
-    nextTurn=currentUser.id; // skip opp in 2-player
+    nextTurn=currentUser.id;
   }
 
-  currentUno.myTurn=false;
-  currentUno.state=state;
+  // Check win (only possible on number cards now since power cards are blocked when last)
+  const won = state[myKey+'_hand'].length===0;
+  const finished = won;
 
-  // Check win
-  const won=state[myKey+'_hand'].length===0;
-  const finished=won;
+  // Allow chaining identical number cards (same val + same col)
+  // Keep myTurn true if hand has another identical card and it's a number card
+  const isNumberCard = !isPowerCard;
+  let chainAvailable = false;
+  if(isNumberCard && !finished && nextTurn===currentUno.oppId) {
+    const sameCard = state[myKey+'_hand'].find(c => c.val===card.val && c.col===card.col);
+    if(sameCard) chainAvailable = true;
+  }
+
+  if(chainAvailable) {
+    currentUno.myTurn = true;
+    nextTurn = currentUser.id;
+  } else {
+    currentUno.myTurn = false;
+  }
+
+  currentUno.state=state;
 
   const turnId=nextTurn===currentUser.id?currentUser.id:currentUno.oppId;
   unoRenderState(state,opp);
@@ -8139,7 +8160,7 @@ async function unoApplyPlay(cardIdx, chosenColour) {
       method:'PATCH',headers:db._headers(),
       body:JSON.stringify({board:JSON.stringify(state),current_turn:turnId,...(finished?{status:'finished',winner:currentUser.id}:{})})
     });
-    if(!finished){
+    if(!finished && turnId!==currentUser.id){
       fetch(`${db.url}/functions/v1/notify-game`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
         body:JSON.stringify({from_name:currentUser.name,from_avatar:currentUser.avatar,to_id:currentUno.oppId,game_id:currentUno.id,game_type:'uno',is_turn:true})
       }).catch(()=>{});
@@ -8980,14 +9001,25 @@ async function bsFire(row, col) {
   if(bsIsHit(state[myKey+'_shots'], row, col)) return; // already fired here
 
   state[myKey+'_shots'].push([row, col]);
-  currentBS.state   = state;
-  currentBS.myTurn  = false;
+  currentBS.state = state;
 
-  const oppShips   = state[oppKey+'_ships'] || [];
-  const finished   = bsAllSunk(oppShips, state[myKey+'_shots']);
-  const opp        = MEMBERS.find(m => m.id === currentBS.oppId);
+  const oppShips = state[oppKey+'_ships'] || [];
+  const hitShip  = bsShipAt(oppShips, row, col);
+  const isActualHit = !!hitShip;
+  const finished = bsAllSunk(oppShips, state[myKey+'_shots']);
+  const opp      = MEMBERS.find(m => m.id === currentBS.oppId);
+
+  // If hit, keep turn — if miss, pass to opponent
+  const nextTurn = (isActualHit && !finished) ? currentUser.id : currentBS.oppId;
+  currentBS.myTurn = isActualHit && !finished;
 
   renderBSBattleGrids(state);
+
+  // Show hit/miss toast
+  if(!finished) {
+    if(isActualHit) showToast('💥 Hit! Fire again!');
+    else showToast('〇 Miss — opponent\'s turn');
+  }
 
   if(finished) {
     currentBS.status = 'finished';
@@ -9002,11 +9034,11 @@ async function bsFire(row, col) {
       method:'PATCH', headers: db._headers(),
       body: JSON.stringify({
         board: JSON.stringify(state),
-        current_turn: currentBS.oppId,
+        current_turn: nextTurn,
         ...(finished ? { status:'finished', winner: currentUser.id } : {})
       })
     });
-    if(!finished) {
+    if(!finished && !isActualHit) {
       fetch(`${db.url}/functions/v1/notify-game`, {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+db.key},
@@ -9780,8 +9812,10 @@ async function renderForfeitCard() {
   if(!db.url || !db.key) return;
 
   try {
+    // Show forfeits from last 24 hours so timezone differences don't hide them
+    const since = new Date(Date.now() - 24*60*60*1000).toISOString();
     const res = await fetch(
-      `${db.url}/rest/v1/forfeits?forfeit_date=eq.${todayKey()}&member_id=neq.${currentUser.id}&order=created_at.desc`,
+      `${db.url}/rest/v1/forfeits?created_at=gte.${since}&member_id=neq.${currentUser.id}&order=created_at.desc`,
       { headers: db._headers() }
     );
     if(!res.ok) { slot.innerHTML=''; return; }
